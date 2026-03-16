@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v6.2: Hybrid</title>
+    <title>GIDEON Engine v6.3</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -14,20 +14,19 @@
         .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; margin: 2px; border-radius: 2px; width: calc(50% - 6px); transition: 0.2s; }
         .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
         #stats { font-size: 10px; margin-top: 15px; background: rgba(0, 20, 20, 0.8); padding: 10px; border-radius: 2px; }
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; letter-spacing: 2px; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
     </style>
 </head>
 <body>
 
-    <div id="loader">GIDEON: ЗАГРУЗКА...</div>
+    <div id="loader">GIDEON: СИНХРОНИЗАЦИЯ...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="toggleUI()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v6.2</h2>
+        <h2>GIDEON ENGINE v6.3</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗОВЫЕ (INST)</div>
@@ -48,11 +47,11 @@
         </div>
         
         <div id="stats">
-            <div class="stat-row">ДЕТАЛЕЙ: <span id="inst-count">0</span></div>
-            <div class="stat-row">ВЕРШИН: <span id="count">0</span></div>
-            <div class="stat-row">FPS: <span id="fps-counter">0</span></div>
+            <div>ДЕТАЛЕЙ: <span id="inst-count">0</span></div>
+            <div>ВЕРШИН: <span id="count">0</span></div>
+            <div>FPS: <span id="fps-counter">0</span></div>
         </div>
-        <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #ffcc00; color:#ffcc00; padding:8px; cursor:pointer; font-size:10px; border-radius:3px;" onclick="centerView()">CENTER VIEW</button>
+        <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #ffcc00; color:#ffcc00; padding:8px; cursor:pointer; font-size:10px;" onclick="centerView()">CENTER VIEW</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -68,7 +67,9 @@
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         let currentGroup = null;
 
-        // 1. Сборка из уникальных файлов (Кольца)
+        // ФАЙЛ-ДОНОР (Тот самый обнуленный Sfiral Anatomy)
+        const MASTER_URL = 'models/Sfiral Anatomy.npy';
+
         async function buildGroup(folder, prefix, count) {
             startLoad();
             let totalPoints = 0;
@@ -82,10 +83,9 @@
             endLoad(count, totalPoints);
         }
 
-        // 2. Ядра (Математический инстансинг из part1)
         async function buildCore(angle) {
             startLoad();
-            const geo = await fetchGeo('models/part1.npy');
+            const geo = await fetchGeo(MASTER_URL);
             if (geo) {
                 const step = (angle * Math.PI) / 180;
                 for (let i = 0; i < 3; i++) {
@@ -97,14 +97,13 @@
             }
         }
 
-        // 3. Базовые модели (Инстансинг)
         async function buildBase(count) {
             startLoad();
-            const geo = await fetchGeo('models/part1.npy');
+            const geo = await fetchGeo(MASTER_URL);
             if (geo) {
                 for (let i = 0; i < count; i++) {
                     const p = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
-                    if (i === 1) p.rotation.set(Math.PI, 0, Math.PI); // Диполь
+                    if (i === 1) p.rotation.set(Math.PI, 0, Math.PI);
                     currentGroup.add(p);
                 }
                 endLoad(count, geo.attributes.position.count * count);
@@ -114,9 +113,10 @@
         async function fetchGeo(path) {
             try {
                 const res = await fetch(path);
+                if(!res.ok) return null;
                 const buffer = await res.arrayBuffer();
                 return new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(buffer.slice(128)), 3));
-            } catch(e) { console.warn("Missing:", path); return null; }
+            } catch(e) { return null; }
         }
 
         function startLoad() {
