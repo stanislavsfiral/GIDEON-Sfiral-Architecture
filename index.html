@@ -2,58 +2,57 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine: Конструктор Сфираль</title>
+    <title>GIDEON Engine v6.2: Hybrid</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
-        .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; display: flex; gap: 10px; }
-        .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 3px; }
-        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 15, 15, 0.95); padding: 20px; border: 1px solid #00ffcc; z-index: 1000; width: 280px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 5px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.2); }
-        h2 { font-size: 14px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc33; padding-bottom: 10px; }
-        .catalog-section { margin-bottom: 15px; border-left: 2px solid #00ffcc33; padding-left: 10px; }
-        .section-title { font-size: 10px; color: #ffcc00; text-transform: uppercase; margin-bottom: 8px; }
-        .model-btn { background: rgba(0, 30, 30, 0.8); border: 1px solid #00ffcc33; color: #aaffff; padding: 4px 8px; font-size: 9px; cursor: pointer; margin: 2px; border-radius: 2px; transition: 0.2s; }
-        .model-btn:hover { border-color: #00ffcc; color: #00ffcc; }
-        #stats { font-size: 11px; margin-top: 20px; background: rgba(0, 20, 20, 0.6); padding: 12px; border-radius: 4px; }
+        .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
+        .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 35px; height: 35px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 10, 10, 0.95); padding: 15px; border: 1px solid #00ffcc; z-index: 1000; width: 280px; max-height: calc(100vh - 100px); overflow-y: auto; border-radius: 4px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.3); }
+        h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc33; padding-bottom: 8px; text-align: center; }
+        .cat-group { margin-bottom: 15px; }
+        .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 5px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
+        .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; margin: 2px; border-radius: 2px; width: calc(50% - 6px); transition: 0.2s; }
+        .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
+        #stats { font-size: 10px; margin-top: 15px; background: rgba(0, 20, 20, 0.8); padding: 10px; border-radius: 2px; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
-    <div id="loader">GIDEON: СБОРКА ИНСТАНСОВ...</div>
+    <div id="loader">GIDEON: ЗАГРУЗКА...</div>
 
     <div class="controls-container">
-        <button class="control-btn" onclick="togglePanel()">≡</button>
+        <button class="control-btn" onclick="toggleUI()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v5.5</h2>
+        <h2>GIDEON ENGINE v6.2</h2>
         
-        <div class="catalog-section">
-            <div class="section-title">🧱 БАЗОВЫЕ</div>
-            <button class="model-btn" onclick="build('sfiral')">СФИРАЛЬ x1</button>
-            <button class="model-btn" onclick="build('dipole')">ДИПОЛЬ x2</button>
-            <button class="model-btn" onclick="build('chain4')">ЦЕПЬ x4</button>
+        <div class="cat-group">
+            <div class="cat-header">🧱 БАЗОВЫЕ (INST)</div>
+            <button class="m-btn" onclick="buildBase(1)">СФИРАЛЬ</button>
+            <button class="m-btn" onclick="buildBase(2)">ДИПОЛЬ</button>
         </div>
 
-        <div class="catalog-section">
-            <div class="section-title">💍 КОЛЬЦА</div>
-            <button class="model-btn" style="border-color:#00ffcc" onclick="build('ring3')">ТРЕУГОЛЬНИК x3</button>
-            <button class="model-btn" style="border-color:#ffcc00" onclick="build('ring4')">КВАДРАТ x4</button>
+        <div class="cat-group">
+            <div class="cat-header">💍 КОЛЬЦА (FOLDER)</div>
+            <button class="m-btn" onclick="buildGroup('rings/rings3', 'rings', 3)">RING x3</button>
+            <button class="m-btn" onclick="buildGroup('rings/ring4', 'sq_part', 4)">SQUARE x4</button>
         </div>
 
-        <div class="catalog-section">
-            <div class="section-title">🛰️ ЯДРО / УЗЕЛ</div>
-            <button class="model-btn" style="border-color:#00aaff" onclick="build('core60')">ШИНА 60°</button>
-            <button class="model-btn" style="border-color:#ff00ff" onclick="build('core120')">ЯДРО 120°</button>
+        <div class="cat-group">
+            <div class="cat-header">🛰️ ЯДРА (MATH)</div>
+            <button class="m-btn" onclick="buildCore(60)">ШИНА 60°</button>
+            <button class="m-btn" onclick="buildCore(120)">ЯДРО 120°</button>
         </div>
         
         <div id="stats">
-            <div class="stat-row"><span>ОБЪЕКТОВ:</span> <span id="inst-count">0</span></div>
-            <div class="stat-row"><span>ВЕРШИН:</span> <span id="count">0</span></div>
-            <div class="stat-row"><span>FPS:</span> <span id="fps-counter">0</span></div>
+            <div class="stat-row">ДЕТАЛЕЙ: <span id="inst-count">0</span></div>
+            <div class="stat-row">ВЕРШИН: <span id="count">0</span></div>
+            <div class="stat-row">FPS: <span id="fps-counter">0</span></div>
         </div>
-        <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #00ffcc; color:#00ffcc; padding:8px; cursor:pointer; font-size:10px; border-radius:3px;" onclick="centerView()">CENTER VIEW</button>
+        <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #ffcc00; color:#ffcc00; padding:8px; cursor:pointer; font-size:10px; border-radius:3px;" onclick="centerView()">CENTER VIEW</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -67,77 +66,78 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
-
-        let masterGeo = null;
         let currentGroup = null;
 
-        async function loadMaster() {
-            document.getElementById('loader').style.display = 'flex';
-            try {
-                // ПУТЬ СОГЛАСНО СКРИНШОТУ: part1.npy в корне папки models
-                const res = await fetch('models/part1.npy');
-                const buffer = await res.arrayBuffer();
-                const floatData = new Float32Array(buffer.slice(128));
-                masterGeo = new THREE.BufferGeometry();
-                masterGeo.setAttribute('position', new THREE.BufferAttribute(floatData, 3));
-                build('sfiral');
-            } catch(e) { console.error("Ошибка загрузки:", e); }
-            document.getElementById('loader').style.display = 'none';
+        // 1. Сборка из уникальных файлов (Кольца)
+        async function buildGroup(folder, prefix, count) {
+            startLoad();
+            let totalPoints = 0;
+            for (let i = 1; i <= count; i++) {
+                const geo = await fetchGeo(`models/static/${folder}/${prefix}${i}.npy`);
+                if (geo) {
+                    currentGroup.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 })));
+                    totalPoints += geo.attributes.position.count;
+                }
+            }
+            endLoad(count, totalPoints);
         }
 
-        function build(type) {
-            if (!masterGeo) return;
+        // 2. Ядра (Математический инстансинг из part1)
+        async function buildCore(angle) {
+            startLoad();
+            const geo = await fetchGeo('models/part1.npy');
+            if (geo) {
+                const step = (angle * Math.PI) / 180;
+                for (let i = 0; i < 3; i++) {
+                    const p = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
+                    p.rotation.y = step * i;
+                    currentGroup.add(p);
+                }
+                endLoad(3, geo.attributes.position.count * 3);
+            }
+        }
+
+        // 3. Базовые модели (Инстансинг)
+        async function buildBase(count) {
+            startLoad();
+            const geo = await fetchGeo('models/part1.npy');
+            if (geo) {
+                for (let i = 0; i < count; i++) {
+                    const p = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
+                    if (i === 1) p.rotation.set(Math.PI, 0, Math.PI); // Диполь
+                    currentGroup.add(p);
+                }
+                endLoad(count, geo.attributes.position.count * count);
+            }
+        }
+
+        async function fetchGeo(path) {
+            try {
+                const res = await fetch(path);
+                const buffer = await res.arrayBuffer();
+                return new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(buffer.slice(128)), 3));
+            } catch(e) { console.warn("Missing:", path); return null; }
+        }
+
+        function startLoad() {
             if (currentGroup) scene.remove(currentGroup);
             currentGroup = new THREE.Group();
             scene.add(currentGroup);
+            document.getElementById('loader').style.display = 'flex';
+        }
 
-            let recipe = [];
-            const STEP = 372.47;
-
-            if (type === 'sfiral') {
-                recipe = [{ p: [0,0,0], r: [0,0,0] }];
-            } else if (type === 'dipole') {
-                recipe = [{ p: [0,0,0], r: [0,0,0] }, { p: [0,0,0], r: [Math.PI, 0, Math.PI] }];
-            } else if (type === 'chain4') {
-                for(let i=0; i<4; i++) recipe.push({ p: [0, 0, STEP*i], r: [i%2===0?0:Math.PI, 0, 0] });
-            } else if (type === 'ring3') {
-                recipe = [
-                    { p: [0, 0, 0], r: [0, 0, 0] },
-                    { p: [236.30, 0, 36.79], r: [Math.PI, -1.0472, Math.PI] },
-                    { p: [86.28, 0, 223.03], r: [-Math.PI, 1.0472, -Math.PI] }
-                ];
-            } else if (type === 'ring4') {
-                // Квадрат: поворот по 90 градусов (Math.PI/2)
-                recipe = [
-                    { p: [0, 0, 0], r: [0, 0, 0] },
-                    { p: [236.3, 0, 0], r: [0, Math.PI/2, 0] },
-                    { p: [236.3, 0, 236.3], r: [0, Math.PI, 0] },
-                    { p: [0, 0, 236.3], r: [0, -Math.PI/2, 0] }
-                ];
-            } else if (type === 'core60') {
-                const s = Math.PI / 3;
-                recipe = [{p:[0,0,0], r:[0,0,0]}, {p:[0,0,0], r:[0,s,0]}, {p:[0,0,0], r:[0,s*2,0]}];
-            } else if (type === 'core120') {
-                const s = (2*Math.PI)/3;
-                recipe = [{p:[0,0,0], r:[0,0,0]}, {p:[0,0,0], r:[0,s,0]}, {p:[0,0,0], r:[0,s*2,0]}];
-            }
-
-            recipe.forEach(s => {
-                const p = new THREE.Points(masterGeo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
-                p.position.set(...s.p);
-                p.rotation.set(...s.r);
-                currentGroup.add(p);
-            });
-
-            document.getElementById('inst-count').innerText = recipe.length;
-            document.getElementById('count').innerText = recipe.length * 264;
+        function endLoad(inst, pts) {
+            document.getElementById('inst-count').innerText = inst;
+            document.getElementById('count').innerText = pts;
+            document.getElementById('loader').style.display = 'none';
             centerView();
         }
 
-        function togglePanel() { 
+        function toggleUI() { 
             const ui = document.getElementById('gideon-ui');
             ui.style.display = ui.style.display === 'none' ? 'block' : 'none';
         }
+
         function centerView() {
             if (!currentGroup) return;
             const box = new THREE.Box3().setFromObject(currentGroup);
@@ -159,7 +159,7 @@
             renderer.render(scene, camera);
         }
 
-        loadMaster();
+        buildBase(1);
         animate();
     </script>
 </body>
