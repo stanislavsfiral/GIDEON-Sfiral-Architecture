@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v8.4 - Fractal Chain Perfect</title>
+    <title>GIDEON Engine v8.6 - Protected Neuro-Core</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -11,7 +11,7 @@
         h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc; padding-bottom: 8px; text-align: center; }
         .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.3); padding: 10px; border-radius: 4px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 5px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
         .input-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 10px; }
         input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; padding: 4px; font-size: 10px; }
         .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; }
@@ -23,20 +23,16 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: СБОРКА ФРАКТАЛЬНОЙ ЦЕПИ...</div>
+    <div id="loader">GIDEON: СБОРКА ЗАЩИЩЕННОГО ЯДРА...</div>
 
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v8.4</h2>
+        <h2>GIDEON ENGINE v8.6</h2>
         
         <div class="cat-group">
-            <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
-            <div class="btn-grid">
-                <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
-                <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
-            </div>
-            <div class="input-row" style="margin-top:5px;">
+            <div class="cat-header">🧱 БАЗОВАЯ ЦЕПЬ</div>
+            <div class="input-row">
                 <span>ЗВЕНЬЕВ:</span>
                 <input type="number" id="simple-chain" value="4" min="1">
                 <button class="m-btn" style="width:100px" onclick="runSimpleChain()">BUILD CHAIN</button>
@@ -44,19 +40,9 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">💍 КОЛЬЦА (RINGS)</div>
-            <div class="btn-grid">
-                <button class="m-btn" onclick="buildRingFolder('ring3', 3)">RING x3</button>
-                <button class="m-btn" onclick="buildRingFolder('ring4', 4)">RING x4</button>
-                <button class="m-btn" onclick="buildRingFolder('ring6', 6)">RING x6</button>
-                <button class="m-btn" onclick="buildRingFolder('ring8', 8)">RING x8</button>
-            </div>
-        </div>
-
-        <div class="cat-group">
             <div class="cat-header">🧬 ФРАКТАЛЬНЫЙ СТРИМ (МАТРЕШКИ)</div>
             <div class="input-row"><span>ВЛОЖЕННОСТЬ (L):</span> <input type="number" id="nest-levels" value="2" min="1" max="5"></div>
-            <div class="input-row"><span>ЦЕПОЧКА (CH):</span> <input type="number" id="nest-chain" value="1" min="1" max="30"></div>
+            <div class="input-row"><span>ЦЕПОЧКА (CH):</span> <input type="number" id="nest-chain" value="4" min="1"></div>
             <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ ЦЕПЬ МАТРЕШЕК</button>
         </div>
 
@@ -81,114 +67,90 @@
         let currentGroup = new THREE.Group();
         scene.add(currentGroup);
 
-        const BASE_PATH = 'models/';
-        const RINGS_PATH = 'models/static/rings/';
         const STEP_Z_OLD = 372.47; 
         const OFFSET_X = 75;
         const OFFSET_Z = 93.12;
+        let baseDataArray = null;
 
-        async function fetchPoints(path) {
-            const res = await fetch(path);
-            if (!res.ok) return null;
-            const buffer = await res.arrayBuffer();
-            return new Float32Array(buffer.slice(128));
+        // --- ФУНКЦИЯ ДИНАМИЧЕСКОЙ СБОРКИ ЯДРА ---
+        async function loadProtectedCore() {
+            const parts = ['p1.npy', 'p2.npy', 'p3.npy', 'p4.npy'];
+            let combined = [];
+            document.getElementById('loader').style.display = 'flex';
+            
+            try {
+                for (let p of parts) {
+                    const res = await fetch(`models/core_v8/${p}`);
+                    if (!res.ok) throw new Error(`Missing core part: ${p}`);
+                    const buffer = await res.arrayBuffer();
+                    const data = new Float32Array(buffer.slice(128));
+                    combined.push(...data);
+                }
+                baseDataArray = new Float32Array(combined);
+            } catch (e) {
+                console.error("GIDEON Core Error:", e);
+                alert("Ошибка сборки ядра. Проверьте папку models/core_v8/");
+            } finally {
+                document.getElementById('loader').style.display = 'none';
+            }
         }
 
-        function createPoints(data, color, scale = 1, opacity = 1) {
-            const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
+        function createPoints(color, scale = 1, opacity = 1) {
+            if (!baseDataArray) return new THREE.Group();
+            const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(baseDataArray, 3));
             const mat = new THREE.PointsMaterial({ color: color, size: 2 * scale, transparent: true, opacity: opacity });
             return new THREE.Points(geo, mat);
         }
 
-        async function buildBase(count) {
-            startLoad();
-            const data = await fetchPoints(`${BASE_PATH}part1.npy`);
-            if (data) {
-                for (let i = 0; i < count; i++) {
-                    const p = createPoints(data, 0x00ffcc);
-                    if (i === 1) p.rotation.set(Math.PI, 0, Math.PI);
-                    currentGroup.add(p);
-                }
-                endLoad(count, (data.length/3)*count);
-            }
-        }
-
         async function runSimpleChain() {
-            startLoad();
+            if (!baseDataArray) await loadProtectedCore();
+            reset();
             const count = parseInt(document.getElementById('simple-chain').value);
-            const data = await fetchPoints(`${BASE_PATH}part1.npy`);
-            if (data) {
-                for (let i = 0; i < count; i++) {
-                    const p = createPoints(data, 0x00ffcc);
-                    p.position.z = i * STEP_Z_OLD;
-                    if (i % 2 !== 0) p.rotation.set(Math.PI, 0, 0); // Твой проверенный поворот
-                    currentGroup.add(p);
-                }
-                endLoad(count, (data.length/3)*count);
+            for (let i = 0; i < count; i++) {
+                const p = createPoints(0x00ffcc);
+                p.position.z = i * STEP_Z_OLD;
+                if (i % 2 !== 0) p.rotation.set(Math.PI, 0, 0);
+                currentGroup.add(p);
             }
+            finalize(count, (baseDataArray.length / 3) * count);
         }
 
-        async function buildRingFolder(folder, count) {
-            startLoad();
-            let pts = 0;
-            for (let i = 1; i <= count; i++) {
-                const data = await fetchPoints(`${RINGS_PATH}${folder}/part${i}.npy`);
-                if (data) {
-                    currentGroup.add(createPoints(data, 0x00ffcc));
-                    pts += data.length / 3;
-                }
-            }
-            endLoad(count, pts);
-        }
-
-        // --- ИСПРАВЛЕННАЯ ЦЕПОЧКА МАТРЕШЕК ---
         async function buildFractalChain() {
-            startLoad();
+            if (!baseDataArray) await loadProtectedCore();
+            reset();
             const levels = parseInt(document.getElementById('nest-levels').value);
             const chainLen = parseInt(document.getElementById('nest-chain').value);
-            const data = await fetchPoints(`${BASE_PATH}part1.npy`); // Берем базу
-
-            if (data) {
-                let totalSpirals = 0;
-                for (let c = 0; c < chainLen; c++) {
-                    const linkGroup = new THREE.Group();
-                    // Выращиваем матрешку внутри группы
-                    generateRecursive(data, 1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
-                    
-                    // Ставим группу в цепь по твоему старому шагу
-                    linkGroup.position.z = c * STEP_Z_OLD;
-                    
-                    // ПРИМЕНЯЕМ ТВОЙ ПРОВЕРЕННЫЙ ПОВОРОТ ДЛЯ КАЖДОГО ВТОРОГО ЗВЕНА
-                    if (c % 2 !== 0) {
-                        linkGroup.rotation.set(Math.PI, 0, 0);
-                    }
-                    
-                    currentGroup.add(linkGroup);
-                    totalSpirals += (Math.pow(2, levels) - 1);
-                }
-                endLoad(totalSpirals, (data.length/3)*totalSpirals);
+            
+            for (let c = 0; c < chainLen; c++) {
+                const linkGroup = new THREE.Group();
+                generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
+                linkGroup.position.z = c * STEP_Z_OLD;
+                if (c % 2 !== 0) linkGroup.rotation.set(Math.PI, 0, 0);
+                currentGroup.add(linkGroup);
             }
+            const spiralsPerLink = (Math.pow(2, levels) - 1);
+            const totalInst = chainLen * spiralsPerLink;
+            finalize(totalInst, (baseDataArray.length / 3) * totalInst);
         }
 
-        function generateRecursive(data, lvl, max, pos, scale, group) {
+        function generateRecursive(lvl, max, pos, scale, group) {
             const colors = [0x00ffcc, 0x00aaff, 0xffcc00, 0xff5500, 0xff00ff];
-            const p = createPoints(data, colors[(lvl-1)%5], scale, lvl===1?0.4:0.9);
+            const p = createPoints(colors[(lvl-1)%5], scale, lvl===1?0.4:0.9);
             p.position.copy(pos);
             p.scale.set(scale, scale, scale);
             group.add(p);
             if (lvl < max) {
                 const s = scale * 0.5;
-                // Те самые смещения +/- 75 и +/- 93.12
-                generateRecursive(data, lvl+1, max, new THREE.Vector3(pos.x - OFFSET_X*scale, pos.y, pos.z + OFFSET_Z*scale), s, group);
-                generateRecursive(data, lvl+1, max, new THREE.Vector3(pos.x + OFFSET_X*scale, pos.y, pos.z - OFFSET_Z*scale), s, group);
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - OFFSET_X*scale, pos.y, pos.z + OFFSET_Z*scale), s, group);
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + OFFSET_X*scale, pos.y, pos.z - OFFSET_Z*scale), s, group);
             }
         }
 
-        function startLoad() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); document.getElementById('loader').style.display = 'flex'; }
-        function endLoad(inst, pts) { 
+        function reset() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); }
+        
+        function finalize(inst, pts) { 
             document.getElementById('inst-count').innerText = inst; 
-            document.getElementById('count').innerText = pts.toLocaleString(); 
-            document.getElementById('loader').style.display = 'none'; 
+            document.getElementById('count').innerText = Math.round(pts).toLocaleString(); 
             setTimeout(centerView, 100); 
         }
 
@@ -203,7 +165,12 @@
 
         function toggleUI() { const ui = document.getElementById('gideon-ui'); ui.style.display = ui.style.display==='none'?'block':'none'; }
         function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
-        animate();
+
+        // Стартовая инициализация
+        loadProtectedCore().then(() => {
+            runSimpleChain();
+            animate();
+        });
     </script>
 </body>
 </html>
