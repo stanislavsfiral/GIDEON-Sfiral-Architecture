@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v8.7 - Secure Fractal Matrix</title>
+    <title>GIDEON Engine v8.8 - Nesting Fix</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -23,12 +23,12 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: СБОРКА И КОРРЕКЦИЯ МАТРИЦЫ...</div>
+    <div id="loader">GIDEON: КОРРЕКЦИЯ ВЛОЖЕННОСТИ...</div>
 
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v8.7</h2>
+        <h2>GIDEON ENGINE v8.8</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗОВАЯ ЦЕПОЧКА</div>
@@ -72,12 +72,10 @@
         const OFFSET_Z = 93.12;
         let baseDataArray = null;
 
-        // --- ДИНАМИЧЕСКАЯ СБОРКА КИРПИЧИКА ---
         async function loadProtectedCore() {
             const parts = ['p1.npy', 'p2.npy', 'p3.npy', 'p4.npy'];
             let combined = [];
             document.getElementById('loader').style.display = 'flex';
-            
             try {
                 for (let p of parts) {
                     const res = await fetch(`models/core_v8/${p}`);
@@ -87,11 +85,8 @@
                     combined.push(...data);
                 }
                 baseDataArray = new Float32Array(combined);
-            } catch (e) {
-                console.error("GIDEON Core Error:", e);
-            } finally {
-                document.getElementById('loader').style.display = 'none';
-            }
+            } catch (e) { console.error("GIDEON Core Error:", e); }
+            finally { document.getElementById('loader').style.display = 'none'; }
         }
 
         function createPoints(color, scale = 1, opacity = 1) {
@@ -119,7 +114,6 @@
             reset();
             const levels = parseInt(document.getElementById('nest-levels').value);
             const chainLen = parseInt(document.getElementById('nest-chain').value);
-            
             for (let c = 0; c < chainLen; c++) {
                 const linkGroup = new THREE.Group();
                 generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
@@ -131,7 +125,7 @@
             finalize(chainLen * spiralsPerLink, (baseDataArray.length / 3) * chainLen * spiralsPerLink);
         }
 
-        // --- ИСПРАВЛЕННАЯ РЕКУРСИЯ (ТОЧНОЕ СМЕЩЕНИЕ) ---
+        // --- КОРРЕКЦИЯ ЗНАКОВ ВЛОЖЕННОСТИ ---
         function generateRecursive(lvl, max, pos, scale, group) {
             const colors = [0x00ffcc, 0x00aaff, 0xffcc00, 0xff5500, 0xff00ff];
             const p = createPoints(colors[(lvl-1)%5], scale, lvl===1?0.4:0.9);
@@ -141,12 +135,12 @@
 
             if (lvl < max) {
                 const nextScale = scale * 0.5;
-                // Смещение рассчитывается точно по текущему масштабу родителя
                 const offX = OFFSET_X * scale;
                 const offZ = OFFSET_Z * scale;
 
-                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - offX, pos.y, pos.z + offZ), nextScale, group);
-                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + offX, pos.y, pos.z - offZ), nextScale, group);
+                // Инвертируем знаки Z: теперь они должны защелкнуться точно в структуру
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - offX, pos.y, pos.z - offZ), nextScale, group);
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + offX, pos.y, pos.z + offZ), nextScale, group);
             }
         }
 
@@ -156,7 +150,6 @@
             document.getElementById('count').innerText = Math.round(pts).toLocaleString(); 
             setTimeout(centerView, 100); 
         }
-
         function centerView() {
             const box = new THREE.Box3().setFromObject(currentGroup);
             const center = box.getCenter(new THREE.Vector3());
@@ -165,10 +158,8 @@
             camera.position.set(center.x, center.y, center.z + Math.max(size.x, size.y, size.z)*1.5);
             controls.update();
         }
-
         function toggleUI() { const ui = document.getElementById('gideon-ui'); ui.style.display = ui.style.display==='none'?'block':'none'; }
         function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
-
         loadProtectedCore().then(() => { runSimpleChain(); animate(); });
     </script>
 </body>
