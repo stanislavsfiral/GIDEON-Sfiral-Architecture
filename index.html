@@ -20,6 +20,7 @@
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .stat-value { color: #00ffcc; font-weight: bold; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; }
+        .label { font-size: 9px; margin-bottom: 5px; color: #55aaaa; text-transform: uppercase; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -80,34 +81,32 @@
             try {
                 const res = await fetch('models/Sfiral Anatomy.npy');
                 const buffer = await res.arrayBuffer();
-                // NPY заголовок обычно 128 байт, далее координаты Float32
                 const floatData = new Float32Array(buffer.slice(128));
                 
                 masterGeo = new THREE.BufferGeometry();
                 masterGeo.setAttribute('position', new THREE.BufferAttribute(floatData, 3));
                 
-                build('sfiral'); // Показываем базу при старте
+                build('sfiral');
             } catch(e) { console.error("Ошибка загрузки анатомии:", e); }
             document.getElementById('loader').style.display = 'none';
         }
 
-        // 2. СБОРОЧНЫЕ ПРАВИЛА (Твое ноу-хау)
+        // 2. СБОРОЧНЫЕ ПРАВИЛА (Калибровка на базе dipole_master.npy)
         function build(type) {
             if (!masterGeo) return;
             if (currentGroup) scene.remove(currentGroup);
 
             currentGroup = new THREE.Group();
             
-            // Здесь мы будем прописывать формулы, которые я вычислю из твоих файлов
             const recipes = {
                 'sfiral': [{ p: [0,0,0], r: [0,0,0] }],
                 'dipole': [
                     { p: [0,0,0], r: [0,0,0] },
-                    { p: [0,0,0], r: [Math.PI, Math.PI, 0] } // 180 по X и Y
+                    { p: [0,0,0], r: [Math.PI, 0, Math.PI] } // Откалибровано по dipole_master.npy
                 ],
                 'chain2': [
                     { p: [0,0,0], r: [0,0,0] },
-                    { p: [0,0,372.5], r: [0,0,0] } // Примерный шаг смещения
+                    { p: [0,0,372.5], r: [0,0,0] } // Жду chain_x2_master.npy для точности
                 ],
                 'chain4': [
                     { p: [0,0,0], r: [0,0,0] },
@@ -132,7 +131,7 @@
         }
 
         // 3. СЕРВИСНЫЕ ФУНКЦИИ
-        function toggleHUD() { /* Логика S-Vision HUD */ }
+        function toggleHUD() { console.log("HUD toggled"); }
         function togglePanel() { 
             const ui = document.getElementById('gideon-ui');
             ui.style.display = ui.style.display === 'none' ? 'block' : 'none';
@@ -156,6 +155,11 @@
             controls.update();
             renderer.render(scene, camera);
         }
+
+        // S-VISION (Заглушки для функций)
+        function applySvisionImage() { console.log("S-Vision Image"); }
+        function applySvisionVideo() { console.log("S-Vision Video"); }
+        function resetMonitor() { console.log("Monitor Reset"); }
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
