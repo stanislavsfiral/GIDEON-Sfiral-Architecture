@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v6.8</title>
+    <title>GIDEON Engine v7.2</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -21,14 +21,14 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: ФОКУСИРОВКА S-СФЕРЫ...</div>
+    <div id="loader">GIDEON: СИНХРОНИЗАЦИЯ СТРУКТУРЫ...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="toggleUI()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v6.8</h2>
+        <h2>GIDEON ENGINE v7.2</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗОВЫЕ / ЦЕПИ</div>
@@ -37,14 +37,15 @@
                 <button class="m-btn" onclick="buildBase(2)">ДИПОЛЬ</button>
             </div>
             <div class="input-group">
-                <input type="number" id="chain-count" value="4" min="1" max="1000">
+                <input type="number" id="chain-count" value="4" min="1">
                 <button class="m-btn" style="flex-grow: 1;" onclick="runChain()">ПОСТРОИТЬ ЦЕПЬ</button>
             </div>
         </div>
 
         <div class="cat-group">
             <div class="cat-header">💍 КОЛЬЦА</div>
-            <button class="m-btn" onclick="buildRingGroup(3)">RING x3</button>
+            <button class="m-btn" onclick="buildFolderGroup('ring3', 3)">RING x3</button>
+            <button class="m-btn" onclick="buildFolderGroup('ring4', 4)">RING x4</button>
         </div>
 
         <div class="cat-group">
@@ -54,7 +55,7 @@
         </div>
         
         <div id="stats">
-            <div>ИНСТАНСОВ: <span id="inst-count">0</span></div>
+            <div>ОБЪЕКТОВ: <span id="inst-count">0</span></div>
             <div>ВЕРШИН: <span id="count">0</span></div>
         </div>
         <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #ffcc00; color:#ffcc00; padding:8px; cursor:pointer; font-size:10px; border-radius:2px;" onclick="centerView()">CENTER VIEW</button>
@@ -74,16 +75,27 @@
         let currentGroup = new THREE.Group();
         scene.add(currentGroup);
 
-        const BASE_PATH = 'models/';
+        const ROOT_PATH = 'models/';
+        const RINGS_PATH = 'models/static/rings/';
 
-        function runChain() {
-            const num = parseInt(document.getElementById('chain-count').value);
-            if(num > 0) buildChain(num);
+        // Загрузка из папок (для Колец)
+        async function buildFolderGroup(folder, count) {
+            startLoad();
+            let totalPoints = 0;
+            for (let i = 1; i <= count; i++) {
+                const fullPath = `${RINGS_PATH}${folder}/part${i}.npy`;
+                const geo = await fetchGeo(fullPath);
+                if (geo) {
+                    currentGroup.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 })));
+                    totalPoints += geo.attributes.position.count;
+                }
+            }
+            endLoad(count, totalPoints);
         }
 
         async function buildChain(count) {
             startLoad();
-            const geo = await fetchGeo(`${BASE_PATH}part1.npy`);
+            const geo = await fetchGeo(`${ROOT_PATH}part1.npy`);
             const STEP = 372.47; 
             if (geo) {
                 for(let i=0; i<count; i++) {
@@ -96,22 +108,9 @@
             }
         }
 
-        async function buildRingGroup(count) {
-            startLoad();
-            let totalPoints = 0;
-            for (let i = 1; i <= count; i++) {
-                const geo = await fetchGeo(`${BASE_PATH}part${i}.npy`);
-                if (geo) {
-                    currentGroup.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 })));
-                    totalPoints += geo.attributes.position.count;
-                }
-            }
-            endLoad(count, totalPoints);
-        }
-
         async function buildCore(angle) {
             startLoad();
-            const geo = await fetchGeo(`${BASE_PATH}part1.npy`);
+            const geo = await fetchGeo(`${ROOT_PATH}part1.npy`);
             if (geo) {
                 const step = (angle * Math.PI) / 180;
                 for (let i = 0; i < 3; i++) {
@@ -125,7 +124,7 @@
 
         async function buildBase(count) {
             startLoad();
-            const geo = await fetchGeo(`${BASE_PATH}part1.npy`);
+            const geo = await fetchGeo(`${ROOT_PATH}part1.npy`);
             if (geo) {
                 for (let i = 0; i < count; i++) {
                     const p = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
@@ -156,7 +155,6 @@
             document.getElementById('inst-count').innerText = inst;
             document.getElementById('count').innerText = pts;
             document.getElementById('loader').style.display = 'none';
-            // Используем новую центровку сразу после загрузки
             setTimeout(centerView, 100);
         }
 
@@ -165,18 +163,13 @@
             ui.style.display = ui.style.display === 'none' ? 'block' : 'none';
         }
 
-        // РЕАЛИЗАЦИЯ ЦЕНТРОВКИ ЧЕРЕЗ BOUNDING SPHERE (КАК В ТВОЕМ ПРИМЕРЕ)
         function centerView() {
             if (!currentGroup || currentGroup.children.length === 0) return;
-
-            // Объединяем все геометрии группы в одну временную для расчета сферы
             let combinedGeometry = new THREE.BufferGeometry();
             let allPositions = [];
-
             currentGroup.children.forEach(child => {
                 if (child.geometry && child.geometry.attributes.position) {
                     const pos = child.geometry.attributes.position.array;
-                    // Учитываем трансформацию инстанса (позицию и поворот)
                     for (let i = 0; i < pos.length; i += 3) {
                         const vec = new THREE.Vector3(pos[i], pos[i+1], pos[i+2]);
                         vec.applyMatrix4(child.matrixWorld);
@@ -184,21 +177,19 @@
                     }
                 }
             });
-
             combinedGeometry.setAttribute('position', new THREE.Float32BufferAttribute(allPositions, 3));
             combinedGeometry.computeBoundingSphere();
-            
             const s = combinedGeometry.boundingSphere;
-
-            // Устанавливаем цель OrbitControls в центр сферы
             controls.target.copy(s.center);
-            
-            // Дистанция камеры зависит от радиуса (3.5 - оптимальный множитель для обзора)
             const d = s.radius > 0 ? s.radius * 3.5 : 500;
             camera.position.set(s.center.x, s.center.y, s.center.z + d);
-            
             controls.update();
-            combinedGeometry.dispose(); // Очищаем память
+            combinedGeometry.dispose();
+        }
+
+        function runChain() {
+            const num = parseInt(document.getElementById('chain-count').value);
+            if(num > 0) buildChain(num);
         }
 
         function animate() {
