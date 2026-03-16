@@ -33,7 +33,7 @@
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v4.0</h2>
+        <h2>GIDEON ENGINE v4.1</h2>
         
         <div class="catalog-section">
             <div class="catalog-title">🧱 КОНСТРУКТОР (INSTANCING)</div>
@@ -42,6 +42,7 @@
                 <button class="model-btn" onclick="build('dipole')">ДИПОЛЬ x2</button>
                 <button class="model-btn" onclick="build('chain2')">ЦЕПЬ x2</button>
                 <button class="model-btn" onclick="build('chain4')">ЦЕПЬ x4</button>
+                <button class="model-btn" onclick="build('chain8')">ЦЕПЬ x8</button>
             </div>
         </div>
 
@@ -51,7 +52,7 @@
         <button class="btn" onclick="resetMonitor()">ОЧИСТИТЬ</button>
 
         <div id="stats">
-            <div class="stat-row"><span>ОБЪЕКТОВ:</span> <span id="inst-count" class="stat-value">0</span></div>
+            <div class="stat-row"><span>ИНСТАНСОВ:</span> <span id="inst-count" class="stat-value">0</span></div>
             <div class="stat-row"><span>ВЕРШИН:</span> <span id="count" class="stat-value">0</span></div>
             <div class="stat-row"><span>FPS:</span> <span id="fps-counter" class="stat-value">0</span></div>
         </div>
@@ -75,7 +76,8 @@
         let currentGroup = null;
         let fps = 0, lastTime = performance.now(), frames = 0;
 
-        // 1. ЗАГРУЗКА ЭТАЛОНА
+        const STEP = 372.47; // Калибровка по chain_x2_master.npy
+
         async function loadMaster() {
             document.getElementById('loader').style.display = 'flex';
             try {
@@ -91,34 +93,31 @@
             document.getElementById('loader').style.display = 'none';
         }
 
-        // 2. СБОРОЧНЫЕ ПРАВИЛА (Калибровка на базе dipole_master.npy)
         function build(type) {
             if (!masterGeo) return;
             if (currentGroup) scene.remove(currentGroup);
-
             currentGroup = new THREE.Group();
             
-            const recipes = {
-                'sfiral': [{ p: [0,0,0], r: [0,0,0] }],
-                'dipole': [
-                    { p: [0,0,0], r: [0,0,0] },
-                    { p: [0,0,0], r: [Math.PI, 0, Math.PI] } // Откалибровано по dipole_master.npy
-                ],
-                'chain2': [
-                    { p: [0,0,0], r: [0,0,0] },
-                    { p: [0,0,372.5], r: [0,0,0] } // Жду chain_x2_master.npy для точности
-                ],
-                'chain4': [
-                    { p: [0,0,0], r: [0,0,0] },
-                    { p: [0,0,372.5], r: [0,0,0] },
-                    { p: [0,0,745], r: [0,0,0] },
-                    { p: [0,0,1117.5], r: [0,0,0] }
-                ]
-            };
+            let recipe = [];
 
-            const steps = recipes[type] || recipes['sfiral'];
-            
-            steps.forEach(s => {
+            if (type === 'sfiral') {
+                recipe = [{ p: [0,0,0], r: [0,0,0] }];
+            } else if (type === 'dipole') {
+                recipe = [
+                    { p: [0,0,0], r: [0,0,0] },
+                    { p: [0,0,0], r: [Math.PI, 0, Math.PI] } // Калибровка dipole_master
+                ];
+            } else if (type.startsWith('chain')) {
+                const count = parseInt(type.replace('chain', ''));
+                for (let i = 0; i < count; i++) {
+                    recipe.push({
+                        p: [0, 0, STEP * i],
+                        r: [i % 2 === 0 ? 0 : Math.PI, 0, 0] // Калибровка chain_x2
+                    });
+                }
+            }
+
+            recipe.forEach(s => {
                 const points = new THREE.Points(masterGeo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
                 points.position.set(...s.p);
                 points.rotation.set(...s.r);
@@ -126,12 +125,11 @@
             });
 
             scene.add(currentGroup);
-            document.getElementById('inst-count').innerText = steps.length;
-            document.getElementById('count').innerText = steps.length * 264;
+            document.getElementById('inst-count').innerText = recipe.length;
+            document.getElementById('count').innerText = recipe.length * 264;
         }
 
-        // 3. СЕРВИСНЫЕ ФУНКЦИИ
-        function toggleHUD() { console.log("HUD toggled"); }
+        function toggleHUD() { console.log("HUD Toggled"); }
         function togglePanel() { 
             const ui = document.getElementById('gideon-ui');
             ui.style.display = ui.style.display === 'none' ? 'block' : 'none';
@@ -156,10 +154,10 @@
             renderer.render(scene, camera);
         }
 
-        // S-VISION (Заглушки для функций)
-        function applySvisionImage() { console.log("S-Vision Image"); }
-        function applySvisionVideo() { console.log("S-Vision Video"); }
-        function resetMonitor() { console.log("Monitor Reset"); }
+        // S-VISION STUBS
+        function applySvisionImage() { console.log("📷 S-Vision Photo Mode"); }
+        function applySvisionVideo() { console.log("🎬 S-Vision Video Mode"); }
+        function resetMonitor() { console.log("🧹 Monitor Cleared"); }
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
