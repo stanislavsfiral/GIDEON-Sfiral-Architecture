@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v7.8 - Fractal Stream</title>
+    <title>GIDEON Engine v7.9 - Ultimate Assembly</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -11,46 +11,55 @@
         h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 2px solid #00ffcc; padding-bottom: 8px; text-align: center; }
         .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.3); padding: 10px; border-radius: 4px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 5px; }
         .input-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 10px; }
-        input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 50px; padding: 4px; font-size: 10px; }
-        .m-btn { background: rgba(0, 60, 60, 0.4); border: 1px solid #00ffcc; color: #fff; width: 100%; padding: 10px; font-size: 11px; cursor: pointer; transition: 0.3s; font-weight: bold; border-radius: 2px; }
-        .m-btn:hover { background: #00ffcc; color: #000; }
+        input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; padding: 4px; font-size: 10px; }
+        .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; }
+        .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
+        .m-btn.action { background: rgba(0, 80, 80, 0.6); border: 1px solid #00ffcc; color: #fff; font-weight: bold; padding: 10px; margin-top: 5px; width: 100%; font-size: 10px; }
         #stats { font-size: 10px; margin-top: 15px; border-top: 1px solid #00ffcc33; padding-top: 10px; }
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; font-size: 12px; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
     </style>
 </head>
 <body>
 
-    <div id="loader">АНАЛИЗ S-МАТРИЦЫ И ГЕНЕРАЦИЯ ЦЕПИ...</div>
+    <div id="loader">GIDEON: СИНХРОНИЗАЦИЯ МОДЕЛЕЙ...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="toggleUI()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v7.8</h2>
+        <h2>GIDEON ENGINE v7.9</h2>
         
         <div class="cat-group">
-            <div class="cat-header">🧬 КОНФИГУРАТОР ФРАКТАЛА</div>
-            
-            <div class="input-row">
-                <span>ГЛУБИНА (LEVELS):</span>
-                <input type="number" id="nest-levels" value="2" min="1" max="5">
+            <div class="cat-header">🧱 БАЗА / ДИПОЛЬ</div>
+            <div class="btn-grid">
+                <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
+                <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
             </div>
-            
-            <div class="input-row">
-                <span>ЦЕПОЧКА (CHAIN):</span>
-                <input type="number" id="nest-chain" value="1" min="1" max="50">
-            </div>
+        </div>
 
-            <button class="m-btn" onclick="buildFractalChain()">ПОСТРОИТЬ ФРАКТАЛЬНУЮ ЦЕПЬ</button>
+        <div class="cat-group">
+            <div class="cat-header">💍 КОЛЬЦА (RINGS)</div>
+            <div class="btn-grid">
+                <button class="m-btn" onclick="buildFolderGroup('ring3', 3)">RING x3</button>
+                <button class="m-btn" onclick="buildFolderGroup('ring4', 4)">RING x4</button>
+                <button class="m-btn" onclick="buildFolderGroup('ring6', 6)">RING x6</button>
+                <button class="m-btn" onclick="buildFolderGroup('ring8', 8)">RING x8</button>
+            </div>
+        </div>
+
+        <div class="cat-group">
+            <div class="cat-header">🧬 ФРАКТАЛЬНЫЙ СТРИМ</div>
+            <div class="input-row"><span>ВЛОЖЕННОСТЬ (L):</span> <input type="number" id="nest-levels" value="2" min="1" max="5"></div>
+            <div class="input-row"><span>ЦЕПОЧКА (CH):</span> <input type="number" id="nest-chain" value="1" min="1" max="30"></div>
+            <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ ЦЕПЬ МАТРЕШЕК</button>
         </div>
 
         <div id="stats">
+            <div class="stat-row"><span>ОБЪЕКТОВ:</span> <span id="inst-count" style="color:#ffcc00">0</span></div>
             <div class="stat-row"><span>ВЕРШИН:</span> <span id="count" style="color:#00ffcc">0</span></div>
-            <div class="stat-row"><span>СФИРАЛЕЙ:</span> <span id="inst-count" style="color:#ffcc00">0</span></div>
-            <div class="stat-row"><span>FPS:</span> <span id="fps-counter">60</span></div>
         </div>
         <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #ffcc00; color:#ffcc00; padding:5px; cursor:pointer; font-size:9px;" onclick="centerView()">CENTER VIEW</button>
     </div>
@@ -60,130 +69,116 @@
 
     <script>
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000000);
         camera.position.set(2000, 2000, 2000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        
         let currentGroup = new THREE.Group();
         scene.add(currentGroup);
 
-        // Математические константы на основе присланных тобой файлов
+        const RINGS_PATH = 'models/static/rings/';
         const OFFSET_X = 75;
         const OFFSET_Z = 93.12;
-        const STEP_Z = 372.48; // Расстояние для стыковки макро-сфиралей в цепь
+        const STEP_Z = 372.48;
 
+        // --- УНИВЕРСАЛЬНЫЙ ЗАГРУЗЧИК ---
+        async function fetchPoints(path) {
+            const res = await fetch(path);
+            if (!res.ok) return null;
+            const buffer = await res.arrayBuffer();
+            return new Float32Array(buffer.slice(128));
+        }
+
+        function createPoints(data, color, scale = 1, opacity = 1) {
+            const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
+            const mat = new THREE.PointsMaterial({ color: color, size: 2 * scale, transparent: true, opacity: opacity });
+            const p = new THREE.Points(geo, mat);
+            p.scale.set(scale, scale, scale);
+            return p;
+        }
+
+        // --- БАЗА И ДИПОЛЬ ---
+        async function buildBase(count) {
+            startLoad();
+            const data = await fetchPoints('models/part1.npy');
+            if (data) {
+                for (let i = 0; i < count; i++) {
+                    const p = createPoints(data, 0x00ffcc);
+                    if (i === 1) { p.rotation.set(Math.PI, 0, Math.PI); p.position.z = STEP_Z/2; }
+                    currentGroup.add(p);
+                }
+                endLoad(count, (data.length/3)*count);
+            }
+        }
+
+        // --- КОЛЬЦА ---
+        async function buildFolderGroup(folder, count) {
+            startLoad();
+            let pts = 0;
+            for (let i = 1; i <= count; i++) {
+                const data = await fetchPoints(`${RINGS_PATH}${folder}/part${i}.npy`);
+                if (data) {
+                    currentGroup.add(createPoints(data, 0x00ffcc));
+                    pts += data.length / 3;
+                }
+            }
+            endLoad(count, pts);
+        }
+
+        // --- ФРАКТАЛЬНАЯ ЦЕПЬ ---
         async function buildFractalChain() {
             startLoad();
             const levels = parseInt(document.getElementById('nest-levels').value);
             const chainLen = parseInt(document.getElementById('nest-chain').value);
+            const data = await fetchPoints(`${RINGS_PATH}matreshka/1/part1.npy`);
             
-            // Загружаем базовую геометрию из папки матрешки
-            const res = await fetch('models/static/rings/matreshka/1/part1.npy');
-            const buffer = await res.arrayBuffer();
-            const pointsArray = new Float32Array(buffer.slice(128));
-            const baseGeo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(pointsArray, 3));
-
-            let totalSpirals = 0;
-
-            for (let c = 0; c < chainLen; c++) {
-                const chainLinkGroup = new THREE.Group();
-                
-                // Генерируем матрешку внутри текущего звена цепи
-                generateRecursive(baseGeo, 1, levels, new THREE.Vector3(0,0,0), 1, chainLinkGroup);
-                
-                // Позиционируем звено в цепи по оси Z
-                chainLinkGroup.position.z = c * STEP_Z;
-                
-                // Принцип АНТИТЕЗЫ: каждая вторая матрешка зеркально развернута для сцепки S-петель
-                if (c % 2 !== 0) {
-                    chainLinkGroup.rotation.x = Math.PI;
-                    chainLinkGroup.rotation.y = Math.PI;
+            if (data) {
+                let spirals = 0;
+                for (let c = 0; c < chainLen; c++) {
+                    const link = new THREE.Group();
+                    generateRecursive(data, 1, levels, new THREE.Vector3(0,0,0), 1, link);
+                    link.position.z = c * STEP_Z;
+                    if (c % 2 !== 0) { link.rotation.x = Math.PI; link.rotation.y = Math.PI; }
+                    currentGroup.add(link);
+                    spirals += (Math.pow(2, levels) - 1);
                 }
-
-                currentGroup.add(chainLinkGroup);
-                totalSpirals += (Math.pow(2, levels) - 1);
+                endLoad(spirals, (data.length/3)*spirals);
             }
-
-            endLoad(totalSpirals, (pointsArray.length / 3) * totalSpirals);
         }
 
-        function generateRecursive(geo, currentLevel, maxLevel, pos, scale, group) {
+        function generateRecursive(data, lvl, max, pos, scale, group) {
             const colors = [0x00ffcc, 0x00aaff, 0xffcc00, 0xff5500, 0xff00ff];
-            
-            const points = new THREE.Points(geo, new THREE.PointsMaterial({ 
-                color: colors[(currentLevel - 1) % colors.length], 
-                size: 2 * scale,
-                transparent: true,
-                opacity: currentLevel === 1 ? 0.4 : 0.9
-            }));
-            
-            points.position.copy(pos);
-            points.scale.set(scale, scale, scale);
-            group.add(points);
-
-            if (currentLevel < maxLevel) {
-                const nextScale = scale * 0.5;
-                const offX = OFFSET_X * scale;
-                const offZ = OFFSET_Z * scale;
-
-                // Порождаем два антисимметричных "потомка"
-                generateRecursive(geo, currentLevel + 1, maxLevel, 
-                    new THREE.Vector3(pos.x - offX, pos.y, pos.z + offZ), nextScale, group);
-                
-                generateRecursive(geo, currentLevel + 1, maxLevel, 
-                    new THREE.Vector3(pos.x + offX, pos.y, pos.z - offZ), nextScale, group);
+            const p = createPoints(data, colors[(lvl-1)%5], scale, lvl===1?0.4:0.9);
+            p.position.copy(pos);
+            group.add(p);
+            if (lvl < max) {
+                const s = scale * 0.5;
+                generateRecursive(data, lvl+1, max, new THREE.Vector3(pos.x - OFFSET_X*scale, pos.y, pos.z + OFFSET_Z*scale), s, group);
+                generateRecursive(data, lvl+1, max, new THREE.Vector3(pos.x + OFFSET_X*scale, pos.y, pos.z - OFFSET_Z*scale), s, group);
             }
         }
 
-        function startLoad() {
-            scene.remove(currentGroup);
-            currentGroup = new THREE.Group();
-            scene.add(currentGroup);
-            document.getElementById('loader').style.display = 'flex';
+        // --- ВСПОМОГАТЕЛЬНЫЕ ---
+        function startLoad() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); document.getElementById('loader').style.display = 'flex'; }
+        function endLoad(inst, pts) { 
+            document.getElementById('inst-count').innerText = inst; 
+            document.getElementById('count').innerText = pts.toLocaleString(); 
+            document.getElementById('loader').style.display = 'none'; 
+            setTimeout(centerView, 100); 
         }
-
-        function endLoad(inst, pts) {
-            document.getElementById('inst-count').innerText = inst;
-            document.getElementById('count').innerText = pts.toLocaleString();
-            document.getElementById('loader').style.display = 'none';
-            setTimeout(centerView, 100);
-        }
-
         function centerView() {
             const box = new THREE.Box3().setFromObject(currentGroup);
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
             controls.target.copy(center);
-            camera.position.set(center.x + size.x, center.y + size.y, center.z + size.z);
+            camera.position.set(center.x + size.x, center.y + size.y, center.z + size.z * 1.2);
             controls.update();
         }
-
-        function toggleUI() { 
-            const ui = document.getElementById('gideon-ui');
-            ui.style.display = ui.style.display === 'none' ? 'block' : 'none';
-        }
-
-        let lastFpsUpdate = performance.now(), frames = 0;
-        function animate() {
-            requestAnimationFrame(animate);
-            frames++;
-            const now = performance.now();
-            if (now - lastFpsUpdate >= 1000) {
-                document.getElementById('fps-counter').innerText = frames;
-                frames = 0; lastFpsUpdate = now;
-            }
-            renderer.render(scene, camera);
-        }
+        function toggleUI() { const ui = document.getElementById('gideon-ui'); ui.style.display = ui.style.display==='none'?'block':'none'; }
+        function animate() { requestAnimationFrame(animate); renderer.render(scene, camera); }
         animate();
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
     </script>
 </body>
 </html>
