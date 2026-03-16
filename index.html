@@ -12,8 +12,8 @@
         .catalog-section { margin-bottom: 15px; border-left: 2px solid #00ffcc33; padding-left: 10px; }
         .model-btn { background: rgba(0, 30, 30, 0.8); border: 1px solid #00ffcc33; color: #aaffff; padding: 4px 8px; font-size: 9px; cursor: pointer; margin: 2px; border-radius: 2px; }
         .model-btn:hover { border-color: #00ffcc; color: #00ffcc; }
-        .core-btn { border-color: #ff00ff; color: #ff00ff; }
-        .bus-btn { border-color: #00aaff; color: #00aaff; }
+        .ring-btn { border-color: #00ffcc; color: #00ffcc; }
+        .special-btn { border-color: #ffcc00; color: #ffcc00; }
         #stats { font-size: 11px; margin-top: 20px; background: rgba(0, 20, 20, 0.6); padding: 12px; border-radius: 4px; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
@@ -21,28 +21,29 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: ГЕНЕРАЦИЯ СТРУКТУРЫ...</div>
+    <div id="loader">GIDEON: РАСЧЕТ КВАДРАТА...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="togglePanel()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v5.2</h2>
-        <div class="catalog-section">
-            <div style="font-size: 10px; color: #ffcc00; margin-bottom: 5px;">🧱 БАЗОВЫЕ</div>
-            <button class="model-btn" onclick="build('sfiral')">СФИРАЛЬ x1</button>
-            <button class="model-btn" onclick="build('ring3')">КОЛЬЦО x3</button>
-        </div>
+        <h2>GIDEON ENGINE v5.3</h2>
         
         <div class="catalog-section">
+            <div style="font-size: 10px; color: #ffcc00; margin-bottom: 5px;">💍 КОЛЬЦА (RINGS)</div>
+            <button class="model-btn ring-btn" onclick="build('ring3')">ТРЕУГОЛЬНИК x3</button>
+            <button class="model-btn special-btn" onclick="build('ring4')">КВАДРАТ x4</button>
+        </div>
+
+        <div class="catalog-section">
             <div style="font-size: 10px; color: #00aaff; margin-bottom: 5px;">🛰️ ЯДРО / ШИНА</div>
-            <button class="model-btn bus-btn" onclick="build('core60')">ЯДРО 60° (ШИНА)</button>
-            <button class="model-btn core-btn" onclick="build('core120')">ЯДРО 120° (УЗЕЛ)</button>
+            <button class="model-btn" onclick="build('core60')">ШИНА 60°</button>
+            <button class="model-btn" onclick="build('core120')">ЯДРО 120°</button>
         </div>
         
         <div id="stats">
-            <div class="stat-row"><span>ОБЪЕКТОВ:</span> <span id="inst-count">0</span></div>
+            <div class="stat-row"><span>ИНСТАНСОВ:</span> <span id="inst-count">0</span></div>
             <div class="stat-row"><span>ВЕРШИН:</span> <span id="count">0</span></div>
             <div class="stat-row"><span>FPS:</span> <span id="fps-counter">0</span></div>
         </div>
@@ -55,7 +56,7 @@
     <script>
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000000);
-        camera.position.set(600, 600, 600);
+        camera.position.set(800, 800, 800);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
@@ -67,12 +68,13 @@
         async function loadMaster() {
             document.getElementById('loader').style.display = 'flex';
             try {
+                // Используем твой эталон part1.npy
                 const res = await fetch('models/part1.npy');
                 const buffer = await res.arrayBuffer();
                 const floatData = new Float32Array(buffer.slice(128));
                 masterGeo = new THREE.BufferGeometry();
                 masterGeo.setAttribute('position', new THREE.BufferAttribute(floatData, 3));
-                build('sfiral');
+                build('ring3');
             } catch(e) { console.error(e); }
             document.getElementById('loader').style.display = 'none';
         }
@@ -85,35 +87,34 @@
 
             let recipe = [];
 
-            if (type === 'sfiral') {
-                recipe = [{ p: [0,0,0], r: [0,0,0] }];
-            } else if (type === 'ring3') {
+            if (type === 'ring3') {
                 recipe = [
                     { p: [0, 0, 0], r: [0, 0, 0] },
                     { p: [236.30, 0, 36.79], r: [Math.PI, -1.0472, Math.PI] },
                     { p: [86.28, 0, 223.03], r: [-Math.PI, 1.0472, -Math.PI] }
                 ];
+            } else if (type === 'ring4') {
+                // ПОДГОТОВКА ПОД ТВОИ ФАЙЛЫ (SQ_PART 1-4)
+                // Пока поставим заглушку, жду твои координаты!
+                recipe = [
+                    { p: [0, 0, 0], r: [0, 0, 0] },
+                    { p: [236, 0, 0], r: [0, Math.PI/2, 0] },
+                    { p: [236, 0, 236], r: [0, Math.PI, 0] },
+                    { p: [0, 0, 236], r: [0, -Math.PI/2, 0] }
+                ];
             } else if (type === 'core60') {
-                const step = Math.PI / 3; 
-                recipe = [
-                    { p: [0, 0, 0], r: [0, 0, 0] },
-                    { p: [0, 0, 0], r: [0, step, 0] },
-                    { p: [0, 0, 0], r: [0, step * 2, 0] }
-                ];
+                const s = Math.PI / 3;
+                recipe = [{p:[0,0,0], r:[0,0,0]}, {p:[0,0,0], r:[0,s,0]}, {p:[0,0,0], r:[0,s*2,0]}];
             } else if (type === 'core120') {
-                const step = (2 * Math.PI) / 3; 
-                recipe = [
-                    { p: [0, 0, 0], r: [0, 0, 0] },
-                    { p: [0, 0, 0], r: [0, step, 0] },
-                    { p: [0, 0, 0], r: [0, step * 2, 0] }
-                ];
+                const s = (2*Math.PI)/3;
+                recipe = [{p:[0,0,0], r:[0,0,0]}, {p:[0,0,0], r:[0,s,0]}, {p:[0,0,0], r:[0,s*2,0]}];
             }
 
             recipe.forEach(s => {
-                const points = new THREE.Points(masterGeo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
-                points.position.set(...s.p);
-                points.rotation.set(...s.r);
-                currentGroup.add(points);
+                const p = new THREE.Points(masterGeo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
+                p.position.set(...s.p);
+                p.rotation.set(...s.r);
+                currentGroup.add(p);
             });
 
             document.getElementById('inst-count').innerText = recipe.length;
