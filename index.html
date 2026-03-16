@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v7.4</title>
+    <title>GIDEON Engine v7.5</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -11,14 +11,10 @@
         h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc33; padding-bottom: 8px; text-align: center; }
         .cat-group { margin-bottom: 15px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 5px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
-        
-        /* Сетка для кнопок */
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 5px; }
-        
         .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 8px; cursor: pointer; border-radius: 2px; transition: 0.2s; text-align: center; }
         .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
         .m-btn.wide { grid-column: span 3; font-size: 10px; color: #ffcc00; }
-
         .input-group { display: flex; gap: 5px; margin-top: 5px; }
         #chain-count { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; font-size: 10px; padding: 4px; border-radius: 2px; outline: none; }
         #stats { font-size: 10px; margin-top: 15px; background: rgba(0, 20, 20, 0.8); padding: 10px; border-radius: 2px; }
@@ -27,14 +23,14 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: СИНХРОНИЗАЦИЯ ЧАСТЕЙ...</div>
+    <div id="loader">GIDEON: СИНХРОНИЗАЦИЯ СТРУКТУРЫ...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="toggleUI()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v7.4</h2>
+        <h2>GIDEON ENGINE v7.5</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗОВЫЕ / ЦЕПИ</div>
@@ -64,7 +60,7 @@
         <div class="cat-group">
             <div class="cat-header">🧸 МАТРЕШКА (NESTING)</div>
             <div class="btn-grid">
-                <button class="m-btn wide" onclick="buildFolderGroup('matreshka', 2)">МАТРЕШКА 1+2</button>
+                <button class="m-btn wide" onclick="buildMatreshka(2)">МАТРЕШКА (СЛОЙ 1 В 2)</button>
             </div>
         </div>
 
@@ -99,6 +95,21 @@
 
         const ROOT_PATH = 'models/';
         const RINGS_PATH = 'models/static/rings/';
+
+        // Специальная функция для глубоких папок Матрешки
+        async function buildMatreshka(layersCount) {
+            startLoad();
+            let totalPoints = 0;
+            for (let i = 1; i <= layersCount; i++) {
+                const fullPath = `${RINGS_PATH}matreshka/${i}/part1.npy`;
+                const geo = await fetchGeo(fullPath);
+                if (geo) {
+                    currentGroup.add(new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 })));
+                    totalPoints += geo.attributes.position.count;
+                }
+            }
+            endLoad(layersCount, totalPoints);
+        }
 
         async function buildFolderGroup(folder, count) {
             startLoad();
