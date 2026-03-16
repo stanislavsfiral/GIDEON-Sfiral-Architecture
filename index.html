@@ -1,8 +1,8 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v8.0 - Component Nesting</title>
+    <title>GIDEON Engine v8.1 - Strict Geometry</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -11,10 +11,9 @@
         h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 2px solid #00ffcc; padding-bottom: 8px; text-align: center; }
         .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.3); padding: 10px; border-radius: 4px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .input-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 10px; }
-        input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; padding: 4px; font-size: 10px; }
-        .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 8px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; width: 100%; }
+        input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 50px; padding: 4px; font-size: 10px; }
+        .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 8px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; width: 100%; margin-top: 4px; }
         .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
         #stats { font-size: 10px; margin-top: 15px; border-top: 1px solid #00ffcc33; padding-top: 10px; }
     </style>
@@ -24,34 +23,32 @@
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v8.0</h2>
+        <h2>GIDEON ENGINE v8.1</h2>
         
         <div class="cat-group">
-            <div class="cat-header">⚙️ ГЛОБАЛЬНЫЕ НАСТРОЙКИ</div>
+            <div class="cat-header">🧩 ФРАКТАЛЬНЫЙ БЛОК</div>
             <div class="input-row">
-                <span>УРОВНИ ВЛОЖЕННОСТИ:</span>
-                <input type="number" id="global-levels" value="2" min="1" max="5">
+                <span>ВЛОЖЕННОСТЬ:</span>
+                <input type="number" id="nest-lvl" value="2" min="1" max="5">
             </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🔗 ГЕОМЕТРИЯ ЦЕПИ</div>
-            <div class="input-row"><span>ЗВЕНЬЕВ (Z):</span> <input type="number" id="chain-count" value="4"></div>
-            <button class="m-btn" onclick="buildChain()">ПОСТРОИТЬ ЦЕПЬ</button>
+            <div class="cat-header">⛓️ ЦЕПЬ МАТРЕШЕК</div>
+            <div class="input-row"><span>ЗВЕНЬЕВ:</span> <input type="number" id="ch-count" value="4"></div>
+            <button class="m-btn" onclick="buildStrictChain()">ПОСТРОИТЬ ЦЕПЬ</button>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">💍 ГЕОМЕТРИЯ КОЛЕЦ</div>
-            <div class="btn-grid">
-                <button class="m-btn" onclick="buildRing(3)">RING x3</button>
-                <button class="m-btn" onclick="buildRing(4)">RING x4</button>
-                <button class="m-btn" onclick="buildRing(6)">RING x6</button>
-                <button class="m-btn" onclick="buildRing(8)">RING x8</button>
+            <div class="cat-header">⭕ КОЛЬЦА МАТРЕШЕК</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px;">
+                <button class="m-btn" onclick="buildStrictRing(4)">RING x4</button>
+                <button class="m-btn" onclick="buildStrictRing(8)">RING x8</button>
             </div>
         </div>
 
         <div id="stats">
-            <div class="stat-row"><span>ОБЪЕКТОВ:</span> <span id="inst-count" style="color:#ffcc00">0</span></div>
+            <div class="stat-row"><span>СФИРАЛЕЙ:</span> <span id="inst-count" style="color:#ffcc00">0</span></div>
             <div class="stat-row"><span>ВЕРШИН:</span> <span id="count" style="color:#00ffcc">0</span></div>
         </div>
         <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #ffcc00; color:#ffcc00; padding:5px; cursor:pointer; font-size:9px;" onclick="centerView()">CENTER VIEW</button>
@@ -70,71 +67,78 @@
         let currentGroup = new THREE.Group();
         scene.add(currentGroup);
 
-        // Константы из твоих моделей
-        const STEP_Z = 372.47;
+        // ТВОИ КОНСТАНТЫ СТЫКОВКИ
+        const STEP_Z = 372.47; 
         const OFFSET_X = 75;
         const OFFSET_Z = 93.12;
 
-        let baseData = null;
+        let baseGeoData = null;
 
         async function init() {
             const res = await fetch('models/part1.npy');
             const buffer = await res.arrayBuffer();
-            baseData = new Float32Array(buffer.slice(128));
-            buildChain(); // Стартовый вид
+            baseGeoData = new Float32Array(buffer.slice(128));
+            buildStrictChain();
         }
 
-        // РЕКУРСИВНЫЙ БЛОК (МАТРЕШКА)
-        function createNestedComponent(lvl, max, pos, scale, parentGroup) {
+        // Чистая функция создания фрактального узла (твоя Матрешка)
+        function createFractalNode(lvl, max, pos, scale, target) {
             const colors = [0x00ffcc, 0x00aaff, 0xffcc00, 0xff5500, 0xff00ff];
-            const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(baseData, 3));
+            const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(baseGeoData, 3));
             const mat = new THREE.PointsMaterial({ color: colors[(lvl-1)%5], size: 2*scale, transparent: true, opacity: lvl===1?0.4:0.9 });
             const p = new THREE.Points(geo, mat);
             p.position.copy(pos);
             p.scale.set(scale, scale, scale);
-            parentGroup.add(p);
+            target.add(p);
 
             if (lvl < max) {
                 const s = scale * 0.5;
-                createNestedComponent(lvl+1, max, new THREE.Vector3(pos.x - OFFSET_X*scale, pos.y, pos.z + OFFSET_Z*scale), s, parentGroup);
-                createNestedComponent(lvl+1, max, new THREE.Vector3(pos.x + OFFSET_X*scale, pos.y, pos.z - OFFSET_Z*scale), s, parentGroup);
+                // Левая дочка
+                createFractalNode(lvl+1, max, new THREE.Vector3(pos.x - OFFSET_X*scale, pos.y, pos.z + OFFSET_Z*scale), s, target);
+                // Правая дочка
+                createFractalNode(lvl+1, max, new THREE.Vector3(pos.x + OFFSET_X*scale, pos.y, pos.z - OFFSET_Z*scale), s, target);
             }
         }
 
-        function buildChain() {
-            clear();
-            const count = parseInt(document.getElementById('chain-count').value);
-            const levels = parseInt(document.getElementById('global-levels').value);
+        function buildStrictChain() {
+            reset();
+            const count = parseInt(document.getElementById('ch-count').value);
+            const lvl = parseInt(document.getElementById('nest-lvl').value);
+            
             for (let i = 0; i < count; i++) {
-                const link = new THREE.Group();
-                createNestedComponent(1, levels, new THREE.Vector3(0,0,0), 1, link);
-                link.position.z = i * STEP_Z;
-                if (i % 2 !== 0) link.rotation.x = Math.PI;
-                currentGroup.add(link);
+                const nodeGroup = new THREE.Group();
+                createFractalNode(1, lvl, new THREE.Vector3(0,0,0), 1, nodeGroup);
+                
+                nodeGroup.position.z = i * STEP_Z;
+                // Чередование для правильной сцепки S-петли
+                if (i % 2 !== 0) nodeGroup.rotation.x = Math.PI;
+                
+                currentGroup.add(nodeGroup);
             }
-            updateStats(count * (Math.pow(2, levels)-1));
+            finalize(count * (Math.pow(2, lvl)-1));
         }
 
-        async function buildRing(count) {
-            clear();
-            const levels = parseInt(document.getElementById('global-levels').value);
-            const radius = 250 + (count * 50); 
+        function buildStrictRing(count) {
+            reset();
+            const lvl = parseInt(document.getElementById('nest-lvl').value);
+            const radius = 400 + (count * 40);
             for (let i = 0; i < count; i++) {
                 const angle = (i / count) * Math.PI * 2;
-                const link = new THREE.Group();
-                createNestedComponent(1, levels, new THREE.Vector3(0,0,0), 1, link);
-                link.position.set(Math.cos(angle)*radius, Math.sin(angle)*radius, 0);
-                link.rotation.z = angle + Math.PI/2;
-                currentGroup.add(link);
+                const nodeGroup = new THREE.Group();
+                createFractalNode(1, lvl, new THREE.Vector3(0,0,0), 1, nodeGroup);
+                
+                nodeGroup.position.set(Math.cos(angle)*radius, Math.sin(angle)*radius, 0);
+                nodeGroup.rotation.z = angle + Math.PI/2;
+                currentGroup.add(nodeGroup);
             }
-            updateStats(count * (Math.pow(2, levels)-1));
+            finalize(count * (Math.pow(2, lvl)-1));
         }
 
-        function clear() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); }
+        function reset() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); }
         
-        function updateStats(inst) {
+        function finalize(inst) {
             document.getElementById('inst-count').innerText = inst;
-            document.getElementById('count').innerText = (inst * (baseData.length/3)).toLocaleString();
+            document.getElementById('count').innerText = (inst * (baseGeoData.length/3)).toLocaleString();
             setTimeout(centerView, 100);
         }
 
