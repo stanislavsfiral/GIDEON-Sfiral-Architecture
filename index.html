@@ -9,8 +9,9 @@
         .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 3px; }
         #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 15, 15, 0.95); padding: 20px; border: 1px solid #00ffcc; z-index: 1000; width: 280px; border-radius: 5px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.2); }
         h2 { font-size: 14px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc33; padding-bottom: 10px; }
-        .model-btn { background: rgba(0, 30, 30, 0.8); border: 1px solid #00ffcc33; color: #aaffff; padding: 4px 8px; font-size: 9px; cursor: pointer; margin: 2px; }
+        .model-btn { background: rgba(0, 30, 30, 0.8); border: 1px solid #00ffcc33; color: #aaffff; padding: 4px 8px; font-size: 9px; cursor: pointer; margin: 2px; border-radius: 2px; }
         .model-btn:hover { border-color: #00ffcc; color: #00ffcc; }
+        .core-btn { border-color: #ff00ff; color: #ff00ff; }
         #stats { font-size: 11px; margin-top: 20px; background: rgba(0, 20, 20, 0.6); padding: 12px; border-radius: 4px; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
@@ -18,25 +19,26 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: МАТРИЧНАЯ СБОРКА...</div>
+    <div id="loader">GIDEON: ГЕНЕРАЦИЯ ЯДРА...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="togglePanel()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v4.9</h2>
+        <h2>GIDEON ENGINE v5.0</h2>
         <div style="font-size: 10px; color: #ffcc00; margin-bottom: 10px;">🧱 КОНСТРУКТОР (ИНСТАНСИНГ)</div>
         <button class="model-btn" onclick="build('sfiral')">СФИРАЛЬ x1</button>
         <button class="model-btn" onclick="build('dipole')">ДИПОЛЬ x2</button>
         <button class="model-btn" onclick="build('ring3')">КОЛЬЦО x3</button>
+        <button class="model-btn core-btn" onclick="build('core')">ЯДРО x3</button>
         
         <div id="stats">
             <div class="stat-row"><span>ОБЪЕКТОВ:</span> <span id="inst-count">0</span></div>
             <div class="stat-row"><span>ВЕРШИН:</span> <span id="count">0</span></div>
             <div class="stat-row"><span>FPS:</span> <span id="fps-counter">0</span></div>
         </div>
-        <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #00ffcc; color:#00ffcc; padding:5px; cursor:pointer;" onclick="centerView()">CENTER VIEW</button>
+        <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #00ffcc; color:#00ffcc; padding:5px; cursor:pointer; font-size:10px;" onclick="centerView()">CENTER VIEW</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -57,15 +59,14 @@
         async function loadMaster() {
             document.getElementById('loader').style.display = 'flex';
             try {
-                // Загружаем ПЕРВУЮ часть как эталон (она уже в нуле)
+                // Используем твой отцентрованный part1 как эталон
                 const res = await fetch('models/part1.npy');
                 const buffer = await res.arrayBuffer();
                 const floatData = new Float32Array(buffer.slice(128));
                 masterGeo = new THREE.BufferGeometry();
                 masterGeo.setAttribute('position', new THREE.BufferAttribute(floatData, 3));
-                // Мы НЕ делаем .center(), так как part1 уже идеально в нуле
                 build('sfiral');
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error("Ошибка загрузки мастера:", e); }
             document.getElementById('loader').style.display = 'none';
         }
 
@@ -75,46 +76,42 @@
             currentGroup = new THREE.Group();
             scene.add(currentGroup);
 
-            let matrices = [];
+            let recipe = [];
 
             if (type === 'sfiral') {
-                matrices.push(new THREE.Matrix4().identity());
+                recipe = [{ p: [0,0,0], r: [0,0,0] }];
             } else if (type === 'dipole') {
-                matrices.push(new THREE.Matrix4().identity());
-                // Диполь: поворот на 180 по X и Z
-                let m2 = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(Math.PI, 0, Math.PI));
-                matrices.push(m2);
+                recipe = [
+                    { p: [0,0,0], r: [0,0,0] },
+                    { p: [0,0,0], r: [Math.PI, 0, Math.PI] }
+                ];
             } else if (type === 'ring3') {
-                // ЭТАЛОННЫЕ МАТРИЦЫ ИЗ ТВОИХ ФАЙЛОВ PART1, 2, 3
-                // Сфираль 1 (База)
-                matrices.push(new THREE.Matrix4().identity());
-                
-                // Сфираль 2
-                let m2 = new THREE.Matrix4();
-                m2.set(
-                    -0.5,      0.8660,    0,         236.30,
-                    -0.8660,   -0.5,      0,         0,
-                    0,         0,         1,         36.79,
-                    0,         0,         0,         1
-                );
-                // Корректировка осей Max -> Three.js (Z-UP -> Y-UP)
-                // Мы используем данные из твоего анализа
-                matrices.push(new THREE.Matrix4().makeTranslation(236.30, 0, 36.79)
-                    .multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(Math.PI, -1.0472, Math.PI))));
-
-                // Сфираль 3
-                matrices.push(new THREE.Matrix4().makeTranslation(86.28, 0, 223.03)
-                    .multiply(new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(-Math.PI, 1.0472, Math.PI))));
+                // Твои проверенные координаты треугольника
+                recipe = [
+                    { p: [0, 0, 0], r: [0, 0, 0] },
+                    { p: [236.30, 0, 36.79], r: [Math.PI, -1.0472, Math.PI] },
+                    { p: [86.28, 0, 223.03], r: [-Math.PI, 1.0472, -Math.PI] }
+                ];
+            } else if (type === 'core') {
+                // ЯДРО: 3 сфирали в одной точке, поворот 60 градусов
+                // Используем ось Y для вращения в плоскости Front (X-Z)
+                const step = Math.PI / 3; // 60 градусов
+                recipe = [
+                    { p: [0, 0, 0], r: [0, 0, 0] },
+                    { p: [0, 0, 0], r: [0, step, 0] },
+                    { p: [0, 0, 0], r: [0, step * 2, 0] }
+                ];
             }
 
-            matrices.forEach(matrix => {
+            recipe.forEach(s => {
                 const points = new THREE.Points(masterGeo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
-                points.applyMatrix4(matrix);
+                points.position.set(...s.p);
+                points.rotation.set(...s.r);
                 currentGroup.add(points);
             });
 
-            document.getElementById('inst-count').innerText = matrices.length;
-            document.getElementById('count').innerText = matrices.length * 264;
+            document.getElementById('inst-count').innerText = recipe.length;
+            document.getElementById('count').innerText = recipe.length * 264;
             centerView();
         }
 
