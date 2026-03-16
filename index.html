@@ -2,61 +2,83 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v7.2</title>
+    <title>GIDEON Engine v7.4</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
         .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 35px; height: 35px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
-        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 10, 10, 0.95); padding: 15px; border: 1px solid #00ffcc; z-index: 1000; width: 280px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 4px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.3); }
+        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 10, 10, 0.95); padding: 15px; border: 1px solid #00ffcc; z-index: 1000; width: 300px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 4px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.3); }
         h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc33; padding-bottom: 8px; text-align: center; }
         .cat-group { margin-bottom: 15px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 5px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
-        .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; margin: 2px; border-radius: 2px; width: calc(50% - 6px); transition: 0.2s; }
+        
+        /* Сетка для кнопок */
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 5px; }
+        
+        .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 8px; cursor: pointer; border-radius: 2px; transition: 0.2s; text-align: center; }
         .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
-        .input-group { display: flex; gap: 5px; margin: 2px; }
-        #chain-count { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 50px; font-size: 10px; padding: 4px; border-radius: 2px; outline: none; }
+        .m-btn.wide { grid-column: span 3; font-size: 10px; color: #ffcc00; }
+
+        .input-group { display: flex; gap: 5px; margin-top: 5px; }
+        #chain-count { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; font-size: 10px; padding: 4px; border-radius: 2px; outline: none; }
         #stats { font-size: 10px; margin-top: 15px; background: rgba(0, 20, 20, 0.8); padding: 10px; border-radius: 2px; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
     </style>
 </head>
 <body>
 
-    <div id="loader">GIDEON: СИНХРОНИЗАЦИЯ СТРУКТУРЫ...</div>
+    <div id="loader">GIDEON: СИНХРОНИЗАЦИЯ ЧАСТЕЙ...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="toggleUI()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v7.2</h2>
+        <h2>GIDEON ENGINE v7.4</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗОВЫЕ / ЦЕПИ</div>
-            <div style="display: flex; flex-wrap: wrap;">
-                <button class="m-btn" onclick="buildBase(1)">СФИРАЛЬ</button>
-                <button class="m-btn" onclick="buildBase(2)">ДИПОЛЬ</button>
+            <div class="btn-grid">
+                <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
+                <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
             </div>
             <div class="input-group">
                 <input type="number" id="chain-count" value="4" min="1">
-                <button class="m-btn" style="flex-grow: 1;" onclick="runChain()">ПОСТРОИТЬ ЦЕПЬ</button>
+                <button class="m-btn" style="flex-grow: 1;" onclick="runChain()">BUILD STREAM</button>
             </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">💍 КОЛЬЦА</div>
-            <button class="m-btn" onclick="buildFolderGroup('ring3', 3)">RING x3</button>
-            <button class="m-btn" onclick="buildFolderGroup('ring4', 4)">RING x4</button>
+            <div class="cat-header">💍 КОЛЬЦА (RINGS)</div>
+            <div class="btn-grid">
+                <button class="m-btn" onclick="buildFolderGroup('ring3', 3)">x3</button>
+                <button class="m-btn" onclick="buildFolderGroup('ring4', 4)">x4</button>
+                <button class="m-btn" onclick="buildFolderGroup('ring5', 5)">x5</button>
+                <button class="m-btn" onclick="buildFolderGroup('ring6', 6)">x6</button>
+                <button class="m-btn" onclick="buildFolderGroup('ring7', 7)">x7</button>
+                <button class="m-btn" onclick="buildFolderGroup('ring8', 8)">x8</button>
+                <button class="m-btn" onclick="buildFolderGroup('ring9', 9)">x9</button>
+            </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🛰️ ЯДРА</div>
-            <button class="m-btn" onclick="buildCore(60)">ШИНА 60°</button>
-            <button class="m-btn" onclick="buildCore(120)">ЯДРО 120°</button>
+            <div class="cat-header">🧸 МАТРЕШКА (NESTING)</div>
+            <div class="btn-grid">
+                <button class="m-btn wide" onclick="buildFolderGroup('matreshka', 2)">МАТРЕШКА 1+2</button>
+            </div>
+        </div>
+
+        <div class="cat-group">
+            <div class="cat-header">🛰️ ЯДРА / ШИНЫ</div>
+            <div class="btn-grid">
+                <button class="m-btn" style="grid-column: span 1.5;" onclick="buildCore(60)">BUS 60°</button>
+                <button class="m-btn" style="grid-column: span 1.5;" onclick="buildCore(120)">CORE 120°</button>
+            </div>
         </div>
         
         <div id="stats">
-            <div>ОБЪЕКТОВ: <span id="inst-count">0</span></div>
-            <div>ВЕРШИН: <span id="count">0</span></div>
+            <div>OBJECTS: <span id="inst-count">0</span></div>
+            <div>VERTICES: <span id="count">0</span></div>
         </div>
         <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #ffcc00; color:#ffcc00; padding:8px; cursor:pointer; font-size:10px; border-radius:2px;" onclick="centerView()">CENTER VIEW</button>
     </div>
@@ -78,7 +100,6 @@
         const ROOT_PATH = 'models/';
         const RINGS_PATH = 'models/static/rings/';
 
-        // Загрузка из папок (для Колец)
         async function buildFolderGroup(folder, count) {
             startLoad();
             let totalPoints = 0;
