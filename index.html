@@ -18,13 +18,12 @@
         .sv-btn { border-color: #ffcc00; color: #ffcc00; }
         #stats { font-size: 11px; margin-top: 20px; background: rgba(0, 20, 20, 0.6); border-radius: 4px; padding: 12px; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
-        .stat-value { color: #00ffcc; font-weight: bold; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; }
     </style>
 </head>
 <body>
 
-    <div id="loader">GIDEON: СБОРКА ИНСТАНСОВ...</div>
+    <div id="loader">GIDEON: СИНХРОНИЗАЦИЯ С MAX...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="toggleHUD()" title="S-Vision HUD">_</button>
@@ -32,28 +31,27 @@
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v4.4</h2>
+        <h2>GIDEON ENGINE v4.6</h2>
         
         <div class="catalog-section">
             <div class="catalog-title">🧱 КОНСТРУКТОР (INSTANCING)</div>
             <div class="catalog-items">
                 <button class="model-btn" onclick="build('sfiral')">СФИРАЛЬ x1</button>
                 <button class="model-btn" onclick="build('dipole')">ДИПОЛЬ x2</button>
-                <button class="model-btn" onclick="build('chain2')">ЦЕПЬ x2</button>
-                <button class="model-btn" onclick="build('chain8')">ЦЕПЬ x8</button>
+                <button class="model-btn" onclick="build('chain4')">ЦЕПЬ x4</button>
                 <button class="model-btn" onclick="build('ring3')">КОЛЬЦО x3</button>
             </div>
         </div>
 
-        <div class="label" style="font-size: 9px; margin: 10px 0 5px; color: #55aaaa;">⚡ S-VISION:</div>
+        <div class="label" style="font-size: 9px; margin: 10px 0 5px; color: #55aaaa; text-transform: uppercase;">⚡ S-VISION:</div>
         <button class="btn sv-btn" onclick="applySvisionImage()">📷 ФОТО</button>
         <button class="btn sv-btn" style="border-color:#ff00ff; color:#ff00ff;" onclick="applySvisionVideo()">🎬 ВИДЕО</button>
         <button class="btn" onclick="resetMonitor()">ОЧИСТИТЬ</button>
 
         <div id="stats">
-            <div class="stat-row"><span>ИНСТАНСОВ:</span> <span id="inst-count" class="stat-value">0</span></div>
-            <div class="stat-row"><span>ВЕРШИН:</span> <span id="count" class="stat-value">0</span></div>
-            <div class="stat-row"><span>FPS:</span> <span id="fps-counter" class="stat-value">0</span></div>
+            <div class="stat-row"><span>ИНСТАНСОВ:</span> <span id="inst-count" class="stat-value" style="color:#00ffcc">0</span></div>
+            <div class="stat-row"><span>ВЕРШИН:</span> <span id="count" class="stat-value" style="color:#00ffcc">0</span></div>
+            <div class="stat-row"><span>FPS:</span> <span id="fps-counter" class="stat-value" style="color:#00ffcc">0</span></div>
         </div>
         
         <button class="btn" onclick="centerView()" style="margin-top:10px;">CENTER VIEW</button>
@@ -83,10 +81,15 @@
                 const res = await fetch('models/Sfiral Anatomy.npy');
                 const buffer = await res.arrayBuffer();
                 const floatData = new Float32Array(buffer.slice(128));
+                
                 masterGeo = new THREE.BufferGeometry();
                 masterGeo.setAttribute('position', new THREE.BufferAttribute(floatData, 3));
+                
+                // КЛЮЧЕВОЙ МОМЕНТ: Сброс локального смещения Анатомии
+                masterGeo.center();
+                
                 build('sfiral');
-            } catch(e) { console.error("Ошибка загрузки анатомии:", e); }
+            } catch(e) { console.error("Ошибка:", e); }
             document.getElementById('loader').style.display = 'none';
         }
 
@@ -104,20 +107,16 @@
                     { p: [0,0,0], r: [0,0,0] },
                     { p: [0,0,0], r: [Math.PI, 0, Math.PI] }
                 ];
-            } else if (type.startsWith('chain')) {
-                const count = parseInt(type.replace('chain', ''));
-                for (let i = 0; i < count; i++) {
-                    recipe.push({
-                        p: [0, 0, STEP * i],
-                        r: [i % 2 === 0 ? 0 : Math.PI, 0, 0]
-                    });
+            } else if (type === 'chain4') {
+                for (let i = 0; i < 4; i++) {
+                    recipe.push({ p: [0, 0, STEP * i], r: [i % 2 === 0 ? 0 : Math.PI, 0, 0] });
                 }
             } else if (type === 'ring3') {
-                // ПРЕЦИЗИОННАЯ СБОРКА ИЗ MAX_EXPORT.NPY
+                // ПРЕЦИЗИОННЫЕ ДАННЫЕ ИЗ PART1, PART2, PART3
                 recipe = [
-                    { p: [128.7692, 0.0, -49.8157], r: [0.0, 0.0, 0.0] },
-                    { p: [-21.2429, 0.0, 136.4252], r: [-3.1416, 1.0472, -3.1416] },
-                    { p: [-107.5264, 0.0, -86.6094], r: [3.1416, -1.0472, -3.1416] }
+                    { p: [0, 0, 0], r: [0, 0, 0] },
+                    { p: [236.30, 0, 36.79], r: [Math.PI, -1.0472, Math.PI] },
+                    { p: [86.28, 0, 223.03], r: [-Math.PI, 1.0472, -Math.PI] }
                 ];
             }
 
@@ -134,7 +133,6 @@
             centerView();
         }
 
-        function toggleHUD() { console.log("HUD Toggled"); }
         function togglePanel() { 
             const ui = document.getElementById('gideon-ui');
             ui.style.display = ui.style.display === 'none' ? 'block' : 'none';
@@ -158,16 +156,6 @@
             controls.update();
             renderer.render(scene, camera);
         }
-
-        function applySvisionImage() { console.log("📷 S-Vision Image"); }
-        function applySvisionVideo() { console.log("🎬 S-Vision Video"); }
-        function resetMonitor() { console.log("🧹 Monitor Reset"); }
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
 
         loadMaster();
         animate();
