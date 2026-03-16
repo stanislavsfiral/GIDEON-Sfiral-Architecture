@@ -20,7 +20,6 @@
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
         .stat-value { color: #00ffcc; font-weight: bold; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; }
-        .label { font-size: 9px; margin-bottom: 5px; color: #55aaaa; text-transform: uppercase; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -46,7 +45,7 @@
             </div>
         </div>
 
-        <div class="label">⚡ S-VISION:</div>
+        <div class="label" style="font-size: 9px; margin: 10px 0 5px; color: #55aaaa;">⚡ S-VISION:</div>
         <button class="btn sv-btn" onclick="applySvisionImage()">📷 ФОТО</button>
         <button class="btn sv-btn" style="border-color:#ff00ff; color:#ff00ff;" onclick="applySvisionVideo()">🎬 ВИДЕО</button>
         <button class="btn" onclick="resetMonitor()">ОЧИСТИТЬ</button>
@@ -116,12 +115,12 @@
                     });
                 }
             } else if (type === 'ring3') {
-                // ПРЕЦИЗИОННАЯ СБОРКА ПО ТВОЕМУ МАСТЕР-ФАЙЛУ
-                // Используем координаты и углы из анализа triangle_3_master.npy
+                // Тот самый "треугольник с обрезаными краями"
+                // Координаты и углы извлечены напрямую из triangle_3_master.npy
                 recipe = [
                     { p: [0, 0, 0], r: [0, 0, 0] },
-                    { p: [236.29, 0, 36.79], r: [-Math.PI, Math.PI / 3, -Math.PI] },
-                    { p: [86.28, 0, 223.03], r: [Math.PI, -Math.PI / 3, -Math.PI] }
+                    { p: [236.29, 0, 36.79], r: [-Math.PI, Math.PI/3, -Math.PI] },
+                    { p: [86.28, 0, 223.03], r: [Math.PI, -Math.PI/3, -Math.PI] }
                 ];
             }
 
@@ -138,7 +137,7 @@
             centerView();
         }
 
-        function toggleHUD() { console.log("HUD Toggled"); }
+        function toggleHUD() { console.log("S-Vision HUD toggled"); }
         function togglePanel() { 
             const ui = document.getElementById('gideon-ui');
             ui.style.display = ui.style.display === 'none' ? 'block' : 'none';
@@ -163,9 +162,9 @@
             renderer.render(scene, camera);
         }
 
-        function applySvisionImage() { console.log("📷 S-Vision Photo Mode"); }
-        function applySvisionVideo() { console.log("🎬 S-Vision Video Mode"); }
-        function resetMonitor() { console.log("🧹 Monitor Cleared"); }
+        function applySvisionImage() { console.log("📷 S-Vision Image"); }
+        function applySvisionVideo() { console.log("🎬 S-Vision Video"); }
+        function resetMonitor() { console.log("🧹 Monitor Reset"); }
 
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
