@@ -9,9 +9,11 @@
         .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 3px; }
         #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 15, 15, 0.95); padding: 20px; border: 1px solid #00ffcc; z-index: 1000; width: 280px; border-radius: 5px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.2); }
         h2 { font-size: 14px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc33; padding-bottom: 10px; }
+        .catalog-section { margin-bottom: 15px; border-left: 2px solid #00ffcc33; padding-left: 10px; }
         .model-btn { background: rgba(0, 30, 30, 0.8); border: 1px solid #00ffcc33; color: #aaffff; padding: 4px 8px; font-size: 9px; cursor: pointer; margin: 2px; border-radius: 2px; }
         .model-btn:hover { border-color: #00ffcc; color: #00ffcc; }
         .core-btn { border-color: #ff00ff; color: #ff00ff; }
+        .bus-btn { border-color: #00aaff; color: #00aaff; }
         #stats { font-size: 11px; margin-top: 20px; background: rgba(0, 20, 20, 0.6); padding: 12px; border-radius: 4px; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
@@ -19,22 +21,28 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: ГЕНЕРАЦИЯ ЯДРА...</div>
+    <div id="loader">GIDEON: ГЕНЕРАЦИЯ СТРУКТУРЫ...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="togglePanel()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v5.1</h2>
-        <div style="font-size: 10px; color: #ffcc00; margin-bottom: 10px;">🧱 КОНСТРУКТОР (ИНСТАНСИНГ)</div>
-        <button class="model-btn" onclick="build('sfiral')">СФИРАЛЬ x1</button>
-        <button class="model-btn" onclick="build('dipole')">ДИПОЛЬ x2</button>
-        <button class="model-btn" onclick="build('ring3')">КОЛЬЦО x3</button>
-        <button class="model-btn core-btn" onclick="build('core')">ЯДРО x3 (120°)</button>
+        <h2>GIDEON ENGINE v5.2</h2>
+        <div class="catalog-section">
+            <div style="font-size: 10px; color: #ffcc00; margin-bottom: 5px;">🧱 БАЗОВЫЕ</div>
+            <button class="model-btn" onclick="build('sfiral')">СФИРАЛЬ x1</button>
+            <button class="model-btn" onclick="build('ring3')">КОЛЬЦО x3</button>
+        </div>
+        
+        <div class="catalog-section">
+            <div style="font-size: 10px; color: #00aaff; margin-bottom: 5px;">🛰️ ЯДРО / ШИНА</div>
+            <button class="model-btn bus-btn" onclick="build('core60')">ЯДРО 60° (ШИНА)</button>
+            <button class="model-btn core-btn" onclick="build('core120')">ЯДРО 120° (УЗЕЛ)</button>
+        </div>
         
         <div id="stats">
-            <div class="stat-row"><span>ИНСТАНСОВ:</span> <span id="inst-count">0</span></div>
+            <div class="stat-row"><span>ОБЪЕКТОВ:</span> <span id="inst-count">0</span></div>
             <div class="stat-row"><span>ВЕРШИН:</span> <span id="count">0</span></div>
             <div class="stat-row"><span>FPS:</span> <span id="fps-counter">0</span></div>
         </div>
@@ -79,19 +87,20 @@
 
             if (type === 'sfiral') {
                 recipe = [{ p: [0,0,0], r: [0,0,0] }];
-            } else if (type === 'dipole') {
-                recipe = [
-                    { p: [0,0,0], r: [0,0,0] },
-                    { p: [0,0,0], r: [Math.PI, 0, Math.PI] }
-                ];
             } else if (type === 'ring3') {
                 recipe = [
                     { p: [0, 0, 0], r: [0, 0, 0] },
                     { p: [236.30, 0, 36.79], r: [Math.PI, -1.0472, Math.PI] },
                     { p: [86.28, 0, 223.03], r: [-Math.PI, 1.0472, -Math.PI] }
                 ];
-            } else if (type === 'core') {
-                // ИНВЕРТИРОВАННАЯ ТРИАДА (120 градусов)
+            } else if (type === 'core60') {
+                const step = Math.PI / 3; 
+                recipe = [
+                    { p: [0, 0, 0], r: [0, 0, 0] },
+                    { p: [0, 0, 0], r: [0, step, 0] },
+                    { p: [0, 0, 0], r: [0, step * 2, 0] }
+                ];
+            } else if (type === 'core120') {
                 const step = (2 * Math.PI) / 3; 
                 recipe = [
                     { p: [0, 0, 0], r: [0, 0, 0] },
