@@ -23,7 +23,7 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: ЗАГРУЗКА КООРДИНАТ...</div>
+    <div id="loader">GIDEON: СБОРКА ИНСТАНСОВ...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="toggleHUD()" title="S-Vision HUD">_</button>
@@ -31,14 +31,14 @@
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v4.8</h2>
+        <h2>GIDEON ENGINE v4.9</h2>
         <div class="catalog-section">
-            <div class="catalog-title">🧱 КОНСТРУКТОР</div>
+            <div class="catalog-title">🧱 КОНСТРУКТОР (INSTANCING)</div>
             <div class="catalog-items">
                 <button class="model-btn" onclick="build('sfiral')">СФИРАЛЬ x1</button>
                 <button class="model-btn" onclick="build('dipole')">ДИПОЛЬ x2</button>
                 <button class="model-btn" onclick="build('chain4')">ЦЕПЬ x4</button>
-                <button class="model-btn" onclick="build('ring3')">КОЛЬЦО x3 (DIRECT)</button>
+                <button class="model-btn" onclick="build('ring3')">КОЛЬЦО x3</button>
             </div>
         </div>
 
@@ -75,55 +75,53 @@
                 const floatData = new Float32Array(buffer.slice(128));
                 masterGeo = new THREE.BufferGeometry();
                 masterGeo.setAttribute('position', new THREE.BufferAttribute(floatData, 3));
-                masterGeo.center(); // Центрируем для одиночных моделей
+                
+                // Центрируем мастер-модель, чтобы Pivot Point был в середине
+                masterGeo.center(); 
+                
                 build('sfiral');
             } catch(e) { console.error(e); }
             document.getElementById('loader').style.display = 'none';
         }
 
-        async function build(type) {
+        function build(type) {
+            if (!masterGeo) return;
             if (currentGroup) scene.remove(currentGroup);
             currentGroup = new THREE.Group();
             scene.add(currentGroup);
+            
+            let recipe = [];
 
-            if (type === 'ring3') {
-                document.getElementById('loader').style.display = 'flex';
-                // ПРЯМАЯ ЗАГРУЗКА ТВОИХ ФАЙЛОВ
-                const parts = ['part1.npy', 'part2.npy', 'part3.npy'];
-                let totalPoints = 0;
-                for (let file of parts) {
-                    try {
-                        const res = await fetch('models/' + file);
-                        const buffer = await res.arrayBuffer();
-                        const floatData = new Float32Array(buffer.slice(128));
-                        const geo = new THREE.BufferGeometry();
-                        geo.setAttribute('position', new THREE.BufferAttribute(floatData, 3));
-                        const points = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
-                        currentGroup.add(points);
-                        totalPoints += floatData.length / 3;
-                    } catch (err) { console.error("Файл не найден:", file); }
+            if (type === 'sfiral') {
+                recipe = [{ p: [0,0,0], r: [0,0,0] }];
+            } else if (type === 'dipole') {
+                recipe = [
+                    { p: [0,0,0], r: [0,0,0] },
+                    { p: [0,0,0], r: [Math.PI, 0, Math.PI] }
+                ];
+            } else if (type === 'ring3') {
+                // ИНСТАНСИНГ НА ОСНОВЕ ПРЯМЫХ КООРДИНАТ PART1, 2, 3
+                // Учитываем смещение Pivot после masterGeo.center()
+                recipe = [
+                    { p: [0, 0, 0], r: [0, 0, 0] },
+                    { p: [236.30, 0, 36.79], r: [Math.PI, -1.0472, Math.PI] },
+                    { p: [86.28, 0, 223.03], r: [-Math.PI, 1.0472, -Math.PI] }
+                ];
+            } else if (type === 'chain4') {
+                for (let i = 0; i < 4; i++) {
+                    recipe.push({ p: [0, 0, STEP * i], r: [i % 2 === 0 ? 0 : Math.PI, 0, 0] });
                 }
-                document.getElementById('inst-count').innerText = parts.length;
-                document.getElementById('count').innerText = totalPoints;
-                document.getElementById('loader').style.display = 'none';
-            } else {
-                // ИНСТАНСИНГ ДЛЯ ОСТАЛЬНЫХ
-                let recipe = [];
-                if (type === 'sfiral') recipe = [{p:[0,0,0], r:[0,0,0]}];
-                if (type === 'dipole') recipe = [{p:[0,0,0], r:[0,0,0]}, {p:[0,0,0], r:[Math.PI, 0, Math.PI]}];
-                if (type === 'chain4') {
-                    for(let i=0; i<4; i++) recipe.push({ p:[0,0,STEP*i], r:[i%2===0?0:Math.PI, 0, 0] });
-                }
-                
-                recipe.forEach(s => {
-                    const p = new THREE.Points(masterGeo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
-                    p.position.set(...s.p);
-                    p.rotation.set(...s.r);
-                    currentGroup.add(p);
-                });
-                document.getElementById('inst-count').innerText = recipe.length;
-                document.getElementById('count').innerText = recipe.length * 264;
             }
+
+            recipe.forEach(s => {
+                const p = new THREE.Points(masterGeo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
+                p.position.set(...s.p);
+                p.rotation.set(...s.r);
+                currentGroup.add(p);
+            });
+
+            document.getElementById('inst-count').innerText = recipe.length;
+            document.getElementById('count').innerText = recipe.length * 264;
             centerView();
         }
 
