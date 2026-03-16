@@ -7,13 +7,12 @@
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; display: flex; gap: 10px; }
         .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 3px; }
-        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 15, 15, 0.95); padding: 20px; border: 1px solid #00ffcc; z-index: 1000; width: 280px; border-radius: 5px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.2); }
+        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 15, 15, 0.95); padding: 20px; border: 1px solid #00ffcc; z-index: 1000; width: 280px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 5px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.2); }
         h2 { font-size: 14px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc33; padding-bottom: 10px; }
         .catalog-section { margin-bottom: 15px; border-left: 2px solid #00ffcc33; padding-left: 10px; }
-        .model-btn { background: rgba(0, 30, 30, 0.8); border: 1px solid #00ffcc33; color: #aaffff; padding: 4px 8px; font-size: 9px; cursor: pointer; margin: 2px; border-radius: 2px; }
+        .section-title { font-size: 10px; color: #ffcc00; text-transform: uppercase; margin-bottom: 8px; }
+        .model-btn { background: rgba(0, 30, 30, 0.8); border: 1px solid #00ffcc33; color: #aaffff; padding: 4px 8px; font-size: 9px; cursor: pointer; margin: 2px; border-radius: 2px; transition: 0.2s; }
         .model-btn:hover { border-color: #00ffcc; color: #00ffcc; }
-        .ring-btn { border-color: #00ffcc; color: #00ffcc; }
-        .special-btn { border-color: #ffcc00; color: #ffcc00; }
         #stats { font-size: 11px; margin-top: 20px; background: rgba(0, 20, 20, 0.6); padding: 12px; border-radius: 4px; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
@@ -21,33 +20,40 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: РАСЧЕТ КВАДРАТА...</div>
+    <div id="loader">GIDEON: СБОРКА ИНСТАНСОВ...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="togglePanel()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v5.3</h2>
+        <h2>GIDEON ENGINE v5.5</h2>
         
         <div class="catalog-section">
-            <div style="font-size: 10px; color: #ffcc00; margin-bottom: 5px;">💍 КОЛЬЦА (RINGS)</div>
-            <button class="model-btn ring-btn" onclick="build('ring3')">ТРЕУГОЛЬНИК x3</button>
-            <button class="model-btn special-btn" onclick="build('ring4')">КВАДРАТ x4</button>
+            <div class="section-title">🧱 БАЗОВЫЕ</div>
+            <button class="model-btn" onclick="build('sfiral')">СФИРАЛЬ x1</button>
+            <button class="model-btn" onclick="build('dipole')">ДИПОЛЬ x2</button>
+            <button class="model-btn" onclick="build('chain4')">ЦЕПЬ x4</button>
         </div>
 
         <div class="catalog-section">
-            <div style="font-size: 10px; color: #00aaff; margin-bottom: 5px;">🛰️ ЯДРО / ШИНА</div>
-            <button class="model-btn" onclick="build('core60')">ШИНА 60°</button>
-            <button class="model-btn" onclick="build('core120')">ЯДРО 120°</button>
+            <div class="section-title">💍 КОЛЬЦА</div>
+            <button class="model-btn" style="border-color:#00ffcc" onclick="build('ring3')">ТРЕУГОЛЬНИК x3</button>
+            <button class="model-btn" style="border-color:#ffcc00" onclick="build('ring4')">КВАДРАТ x4</button>
+        </div>
+
+        <div class="catalog-section">
+            <div class="section-title">🛰️ ЯДРО / УЗЕЛ</div>
+            <button class="model-btn" style="border-color:#00aaff" onclick="build('core60')">ШИНА 60°</button>
+            <button class="model-btn" style="border-color:#ff00ff" onclick="build('core120')">ЯДРО 120°</button>
         </div>
         
         <div id="stats">
-            <div class="stat-row"><span>ИНСТАНСОВ:</span> <span id="inst-count">0</span></div>
+            <div class="stat-row"><span>ОБЪЕКТОВ:</span> <span id="inst-count">0</span></div>
             <div class="stat-row"><span>ВЕРШИН:</span> <span id="count">0</span></div>
             <div class="stat-row"><span>FPS:</span> <span id="fps-counter">0</span></div>
         </div>
-        <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #00ffcc; color:#00ffcc; padding:5px; cursor:pointer; font-size:10px;" onclick="centerView()">CENTER VIEW</button>
+        <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #00ffcc; color:#00ffcc; padding:8px; cursor:pointer; font-size:10px; border-radius:3px;" onclick="centerView()">CENTER VIEW</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -68,14 +74,14 @@
         async function loadMaster() {
             document.getElementById('loader').style.display = 'flex';
             try {
-                // Используем твой эталон part1.npy
+                // ПУТЬ СОГЛАСНО СКРИНШОТУ: part1.npy в корне папки models
                 const res = await fetch('models/part1.npy');
                 const buffer = await res.arrayBuffer();
                 const floatData = new Float32Array(buffer.slice(128));
                 masterGeo = new THREE.BufferGeometry();
                 masterGeo.setAttribute('position', new THREE.BufferAttribute(floatData, 3));
-                build('ring3');
-            } catch(e) { console.error(e); }
+                build('sfiral');
+            } catch(e) { console.error("Ошибка загрузки:", e); }
             document.getElementById('loader').style.display = 'none';
         }
 
@@ -86,21 +92,27 @@
             scene.add(currentGroup);
 
             let recipe = [];
+            const STEP = 372.47;
 
-            if (type === 'ring3') {
+            if (type === 'sfiral') {
+                recipe = [{ p: [0,0,0], r: [0,0,0] }];
+            } else if (type === 'dipole') {
+                recipe = [{ p: [0,0,0], r: [0,0,0] }, { p: [0,0,0], r: [Math.PI, 0, Math.PI] }];
+            } else if (type === 'chain4') {
+                for(let i=0; i<4; i++) recipe.push({ p: [0, 0, STEP*i], r: [i%2===0?0:Math.PI, 0, 0] });
+            } else if (type === 'ring3') {
                 recipe = [
                     { p: [0, 0, 0], r: [0, 0, 0] },
                     { p: [236.30, 0, 36.79], r: [Math.PI, -1.0472, Math.PI] },
                     { p: [86.28, 0, 223.03], r: [-Math.PI, 1.0472, -Math.PI] }
                 ];
             } else if (type === 'ring4') {
-                // ПОДГОТОВКА ПОД ТВОИ ФАЙЛЫ (SQ_PART 1-4)
-                // Пока поставим заглушку, жду твои координаты!
+                // Квадрат: поворот по 90 градусов (Math.PI/2)
                 recipe = [
                     { p: [0, 0, 0], r: [0, 0, 0] },
-                    { p: [236, 0, 0], r: [0, Math.PI/2, 0] },
-                    { p: [236, 0, 236], r: [0, Math.PI, 0] },
-                    { p: [0, 0, 236], r: [0, -Math.PI/2, 0] }
+                    { p: [236.3, 0, 0], r: [0, Math.PI/2, 0] },
+                    { p: [236.3, 0, 236.3], r: [0, Math.PI, 0] },
+                    { p: [0, 0, 236.3], r: [0, -Math.PI/2, 0] }
                 ];
             } else if (type === 'core60') {
                 const s = Math.PI / 3;
