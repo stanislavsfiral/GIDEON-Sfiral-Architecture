@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>GIDEON Engine: Конструктор Сфираль</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
+        .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; display: flex; gap: 10px; }
+        .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 3px; box-shadow: 0 0 10px rgba(255, 204, 0, 0.3); }
+        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 15, 15, 0.95); padding: 20px; border: 1px solid #00ffcc; z-index: 1000; width: 280px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 5px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.2); }
+        h2 { font-size: 14px; margin: 0 0 15px 0; letter-spacing: 2px; border-bottom: 1px solid #00ffcc33; padding-bottom: 10px; }
+        .catalog-section { margin-bottom: 15px; border-left: 2px solid #00ffcc33; padding-left: 10px; }
+        .catalog-title { color: #ffcc00; font-size: 10px; text-transform: uppercase; margin-bottom: 5px; }
+        .catalog-items { display: flex; flex-wrap: wrap; gap: 5px; }
+        .model-btn { background: rgba(0, 30, 30, 0.8); border: 1px solid #00ffcc33; color: #aaffff; padding: 4px 8px; font-size: 9px; cursor: pointer; border-radius: 2px; transition: 0.2s; }
+        .model-btn:hover { border-color: #00ffcc; color: #00ffcc; }
+        .btn { background: transparent; border: 1px solid #00ffcc; color: #00ffcc; padding: 8px; cursor: pointer; font-size: 10px; width: 100%; margin-top: 5px; border-radius: 3px; }
+        .sv-btn { border-color: #ffcc00; color: #ffcc00; }
+        #stats { font-size: 11px; margin-top: 20px; background: rgba(0, 20, 20, 0.6); border-radius: 4px; padding: 12px; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+        .stat-value { color: #00ffcc; font-weight: bold; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; }
+    </style>
+</head>
+<body>
+
+    <div id="loader">GIDEON: СБОРКА ИНСТАНСОВ...</div>
+
+    <div class="controls-container">
+        <button class="control-btn" onclick="toggleHUD()" title="S-Vision HUD">_</button>
+        <button class="control-btn" onclick="togglePanel()" title="Панель управления">≡</button>
+    </div>
+
+    <div id="gideon-ui">
+        <h2>GIDEON ENGINE v4.0</h2>
+        
+        <div class="catalog-section">
+            <div class="catalog-title">🧱 КОНСТРУКТОР (INSTANCING)</div>
+            <div class="catalog-items">
+                <button class="model-btn" onclick="build('sfiral')">СФИРАЛЬ x1</button>
+                <button class="model-btn" onclick="build('dipole')">ДИПОЛЬ x2</button>
+                <button class="model-btn" onclick="build('chain2')">ЦЕПЬ x2</button>
+                <button class="model-btn" onclick="build('chain4')">ЦЕПЬ x4</button>
+            </div>
+        </div>
+
+        <div class="label">⚡ S-VISION:</div>
+        <button class="btn sv-btn" onclick="applySvisionImage()">📷 ФОТО</button>
+        <button class="btn sv-btn" style="border-color:#ff00ff; color:#ff00ff;" onclick="applySvisionVideo()">🎬 ВИДЕО</button>
+        <button class="btn" onclick="resetMonitor()">ОЧИСТИТЬ</button>
+
+        <div id="stats">
+            <div class="stat-row"><span>ОБЪЕКТОВ:</span> <span id="inst-count" class="stat-value">0</span></div>
+            <div class="stat-row"><span>ВЕРШИН:</span> <span id="count" class="stat-value">0</span></div>
+            <div class="stat-row"><span>FPS:</span> <span id="fps-counter" class="stat-value">0</span></div>
+        </div>
+        
+        <button class="btn" onclick="centerView()" style="margin-top:10px;">CENTER VIEW</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000000);
+        camera.position.set(600, 600, 600);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+        let masterGeo = null;
+        let currentGroup = null;
+        let fps = 0, lastTime = performance.now(), frames = 0;
+
+        // 1. ЗАГРУЗКА ЭТАЛОНА
+        async function loadMaster() {
+            document.getElementById('loader').style.display = 'flex';
+            try {
+                const res = await fetch('models/Sfiral Anatomy.npy');
+                const buffer = await res.arrayBuffer();
+                // NPY заголовок обычно 128 байт, далее координаты Float32
+                const floatData = new Float32Array(buffer.slice(128));
+                
+                masterGeo = new THREE.BufferGeometry();
+                masterGeo.setAttribute('position', new THREE.BufferAttribute(floatData, 3));
+                
+                build('sfiral'); // Показываем базу при старте
+            } catch(e) { console.error("Ошибка загрузки анатомии:", e); }
+            document.getElementById('loader').style.display = 'none';
+        }
+
+        // 2. СБОРОЧНЫЕ ПРАВИЛА (Твое ноу-хау)
+        function build(type) {
+            if (!masterGeo) return;
+            if (currentGroup) scene.remove(currentGroup);
+
+            currentGroup = new THREE.Group();
+            
+            // Здесь мы будем прописывать формулы, которые я вычислю из твоих файлов
+            const recipes = {
+                'sfiral': [{ p: [0,0,0], r: [0,0,0] }],
+                'dipole': [
+                    { p: [0,0,0], r: [0,0,0] },
+                    { p: [0,0,0], r: [Math.PI, Math.PI, 0] } // 180 по X и Y
+                ],
+                'chain2': [
+                    { p: [0,0,0], r: [0,0,0] },
+                    { p: [0,0,372.5], r: [0,0,0] } // Примерный шаг смещения
+                ],
+                'chain4': [
+                    { p: [0,0,0], r: [0,0,0] },
+                    { p: [0,0,372.5], r: [0,0,0] },
+                    { p: [0,0,745], r: [0,0,0] },
+                    { p: [0,0,1117.5], r: [0,0,0] }
+                ]
+            };
+
+            const steps = recipes[type] || recipes['sfiral'];
+            
+            steps.forEach(s => {
+                const points = new THREE.Points(masterGeo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
+                points.position.set(...s.p);
+                points.rotation.set(...s.r);
+                currentGroup.add(points);
+            });
+
+            scene.add(currentGroup);
+            document.getElementById('inst-count').innerText = steps.length;
+            document.getElementById('count').innerText = steps.length * 264;
+        }
+
+        // 3. СЕРВИСНЫЕ ФУНКЦИИ
+        function toggleHUD() { /* Логика S-Vision HUD */ }
+        function togglePanel() { 
+            const ui = document.getElementById('gideon-ui');
+            ui.style.display = ui.style.display === 'none' ? 'block' : 'none';
+        }
+        function centerView() {
+            if (!currentGroup) return;
+            const box = new THREE.Box3().setFromObject(currentGroup);
+            const center = box.getCenter(new THREE.Vector3());
+            controls.target.copy(center);
+            controls.update();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            frames++;
+            const now = performance.now();
+            if (now >= lastTime + 1000) {
+                document.getElementById('fps-counter').innerText = frames;
+                frames = 0; lastTime = now;
+            }
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        loadMaster();
+        animate();
+    </script>
+</body>
+</html>
