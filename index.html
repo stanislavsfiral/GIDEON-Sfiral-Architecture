@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v6.4</title>
+    <title>GIDEON Engine v6.5</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -19,19 +19,20 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: ВОССТАНОВЛЕНИЕ СВЯЗЕЙ...</div>
+    <div id="loader">GIDEON: СБОРКА ЦЕПИ...</div>
 
     <div class="controls-container">
         <button class="control-btn" onclick="toggleUI()">≡</button>
     </div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v6.4</h2>
+        <h2>GIDEON ENGINE v6.5</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗОВЫЕ</div>
             <button class="m-btn" onclick="buildBase(1)">СФИРАЛЬ</button>
             <button class="m-btn" onclick="buildBase(2)">ДИПОЛЬ</button>
+            <button class="m-btn" onclick="buildChain(4)">ЦЕПОЧКА x4</button>
         </div>
 
         <div class="cat-group">
@@ -65,8 +66,24 @@
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         let currentGroup = null;
 
-        // ПУТЬ К КОРНЮ МОДЕЛЕЙ
         const BASE_PATH = 'models/';
+
+        // НОВАЯ ФУНКЦИЯ ДЛЯ ЦЕПОЧЕК
+        async function buildChain(count) {
+            startLoad();
+            const geo = await fetchGeo(`${BASE_PATH}part1.npy`);
+            const STEP = 372.47; 
+            if (geo) {
+                for(let i=0; i<count; i++) {
+                    const p = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2 }));
+                    p.position.z = STEP * i;
+                    // Антисимметричный разворот каждого четного звена
+                    if(i % 2 !== 0) p.rotation.set(Math.PI, 0, 0); 
+                    currentGroup.add(p);
+                }
+                endLoad(count, geo.attributes.position.count * count);
+            }
+        }
 
         async function buildRingGroup(count) {
             startLoad();
