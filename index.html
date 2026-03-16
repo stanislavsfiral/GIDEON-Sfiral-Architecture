@@ -77,7 +77,6 @@
         let fps = 0, lastTime = performance.now(), frames = 0;
 
         const STEP = 372.47; 
-        const RING_RADIUS = 138.07; 
 
         async function loadMaster() {
             document.getElementById('loader').style.display = 'flex';
@@ -117,15 +116,13 @@
                     });
                 }
             } else if (type === 'ring3') {
-                // ПРАВИЛЬНАЯ ЛОГИКА ТРЕУГОЛЬНИКА
-                for (let i = 0; i < 3; i++) {
-                    const angle = (i * 2 * Math.PI) / 3;
-                    recipe.push({
-                        p: [Math.sin(angle) * RING_RADIUS, 0, Math.cos(angle) * RING_RADIUS],
-                        // angle + PI/2 разворачивает сфираль вдоль линии окружности
-                        r: [0, angle + Math.PI / 2, 0] 
-                    });
-                }
+                // ПРЕЦИЗИОННАЯ СБОРКА ПО ТВОЕМУ МАСТЕР-ФАЙЛУ
+                // Используем координаты и углы из анализа triangle_3_master.npy
+                recipe = [
+                    { p: [0, 0, 0], r: [0, 0, 0] },
+                    { p: [236.29, 0, 36.79], r: [-Math.PI, Math.PI / 3, -Math.PI] },
+                    { p: [86.28, 0, 223.03], r: [Math.PI, -Math.PI / 3, -Math.PI] }
+                ];
             }
 
             recipe.forEach(s => {
@@ -166,7 +163,6 @@
             renderer.render(scene, camera);
         }
 
-        // S-VISION STUBS
         function applySvisionImage() { console.log("📷 S-Vision Photo Mode"); }
         function applySvisionVideo() { console.log("🎬 S-Vision Video Mode"); }
         function resetMonitor() { console.log("🧹 Monitor Cleared"); }
