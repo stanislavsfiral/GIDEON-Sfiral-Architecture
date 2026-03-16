@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v8.6 - Protected Neuro-Core</title>
+    <title>GIDEON Engine v8.7 - Secure Fractal Matrix</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -23,15 +23,15 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: СБОРКА ЗАЩИЩЕННОГО ЯДРА...</div>
+    <div id="loader">GIDEON: СБОРКА И КОРРЕКЦИЯ МАТРИЦЫ...</div>
 
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v8.6</h2>
+        <h2>GIDEON ENGINE v8.7</h2>
         
         <div class="cat-group">
-            <div class="cat-header">🧱 БАЗОВАЯ ЦЕПЬ</div>
+            <div class="cat-header">🧱 БАЗОВАЯ ЦЕПОЧКА</div>
             <div class="input-row">
                 <span>ЗВЕНЬЕВ:</span>
                 <input type="number" id="simple-chain" value="4" min="1">
@@ -40,7 +40,7 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧬 ФРАКТАЛЬНЫЙ СТРИМ (МАТРЕШКИ)</div>
+            <div class="cat-header">🧬 ФРАКТАЛЬНЫЙ СТРИМ</div>
             <div class="input-row"><span>ВЛОЖЕННОСТЬ (L):</span> <input type="number" id="nest-levels" value="2" min="1" max="5"></div>
             <div class="input-row"><span>ЦЕПОЧКА (CH):</span> <input type="number" id="nest-chain" value="4" min="1"></div>
             <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ ЦЕПЬ МАТРЕШЕК</button>
@@ -72,7 +72,7 @@
         const OFFSET_Z = 93.12;
         let baseDataArray = null;
 
-        // --- ФУНКЦИЯ ДИНАМИЧЕСКОЙ СБОРКИ ЯДРА ---
+        // --- ДИНАМИЧЕСКАЯ СБОРКА КИРПИЧИКА ---
         async function loadProtectedCore() {
             const parts = ['p1.npy', 'p2.npy', 'p3.npy', 'p4.npy'];
             let combined = [];
@@ -81,7 +81,7 @@
             try {
                 for (let p of parts) {
                     const res = await fetch(`models/core_v8/${p}`);
-                    if (!res.ok) throw new Error(`Missing core part: ${p}`);
+                    if (!res.ok) throw new Error(`Missing: ${p}`);
                     const buffer = await res.arrayBuffer();
                     const data = new Float32Array(buffer.slice(128));
                     combined.push(...data);
@@ -89,7 +89,6 @@
                 baseDataArray = new Float32Array(combined);
             } catch (e) {
                 console.error("GIDEON Core Error:", e);
-                alert("Ошибка сборки ядра. Проверьте папку models/core_v8/");
             } finally {
                 document.getElementById('loader').style.display = 'none';
             }
@@ -129,25 +128,29 @@
                 currentGroup.add(linkGroup);
             }
             const spiralsPerLink = (Math.pow(2, levels) - 1);
-            const totalInst = chainLen * spiralsPerLink;
-            finalize(totalInst, (baseDataArray.length / 3) * totalInst);
+            finalize(chainLen * spiralsPerLink, (baseDataArray.length / 3) * chainLen * spiralsPerLink);
         }
 
+        // --- ИСПРАВЛЕННАЯ РЕКУРСИЯ (ТОЧНОЕ СМЕЩЕНИЕ) ---
         function generateRecursive(lvl, max, pos, scale, group) {
             const colors = [0x00ffcc, 0x00aaff, 0xffcc00, 0xff5500, 0xff00ff];
             const p = createPoints(colors[(lvl-1)%5], scale, lvl===1?0.4:0.9);
             p.position.copy(pos);
             p.scale.set(scale, scale, scale);
             group.add(p);
+
             if (lvl < max) {
-                const s = scale * 0.5;
-                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - OFFSET_X*scale, pos.y, pos.z + OFFSET_Z*scale), s, group);
-                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + OFFSET_X*scale, pos.y, pos.z - OFFSET_Z*scale), s, group);
+                const nextScale = scale * 0.5;
+                // Смещение рассчитывается точно по текущему масштабу родителя
+                const offX = OFFSET_X * scale;
+                const offZ = OFFSET_Z * scale;
+
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - offX, pos.y, pos.z + offZ), nextScale, group);
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + offX, pos.y, pos.z - offZ), nextScale, group);
             }
         }
 
         function reset() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); }
-        
         function finalize(inst, pts) { 
             document.getElementById('inst-count').innerText = inst; 
             document.getElementById('count').innerText = Math.round(pts).toLocaleString(); 
@@ -166,11 +169,7 @@
         function toggleUI() { const ui = document.getElementById('gideon-ui'); ui.style.display = ui.style.display==='none'?'block':'none'; }
         function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
 
-        // Стартовая инициализация
-        loadProtectedCore().then(() => {
-            runSimpleChain();
-            animate();
-        });
+        loadProtectedCore().then(() => { runSimpleChain(); animate(); });
     </script>
 </body>
 </html>
