@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v9.6 - Auto-Fractal Master</title>
+    <title>GIDEON Engine v9.6.2 - Precision Fractal</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -25,11 +25,11 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: ФРАКТАЛЬНЫЙ СИНТЕЗ...</div>
+    <div id="loader">GIDEON: ТОПОЛОГИЧЕСКИЙ СИНТЕЗ...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v9.6</h2>
+        <h2>GIDEON CORE v9.6.2</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
@@ -50,16 +50,16 @@
                 <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildAutoDeepRing('ring3', 3)">MASTER RING x3</button>
                 <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildAutoDeepRing('ring4', 4)">MASTER RING x4</button>
             </div>
-            <div style="font-size:8px; color:#55aaaa; text-align:center; margin-top:4px;">(Использует уровень L для вложенности)</div>
+            <div style="font-size:8px; color:#55aaaa; text-align:center; margin-top:4px;">(Использует локальные якоря Alpha/Omega)</div>
         </div>
 
         <div class="cat-group">
             <div class="cat-header">🌀 АВТО-МАТРИЦА (МАТРЕШКА)</div>
             <div style="font-size:10px; margin-bottom:5px;">
-                L (Уровни): <input type="number" id="nest-levels" value="2" min="1" max="5">
+                L (Уровни): <input type="number" id="nest-levels" value="4" min="1" max="6">
             </div>
             <div style="font-size:10px; margin-bottom:5px;">
-                CH (Цепь): <input type="number" id="nest-chain" value="4">
+                CH (Цепь): <input type="number" id="nest-chain" value="1">
             </div>
             <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ МАТРИЦУ</button>
         </div>
@@ -144,7 +144,7 @@
             finalize((baseDataArray.length/3)*count);
         }
 
-        // --- НОВАЯ ФУНКЦИЯ: АВТО-ФРАКТАЛИЗАЦИЯ ТРЕУГОЛЬНИКА ---
+        // --- ИСПРАВЛЕННЫЙ MASTER RING: ЛОКАЛЬНАЯ РЕКУРСИЯ ---
         async function buildAutoDeepRing(folder, count) {
             reset();
             document.getElementById('loader').style.display = 'flex';
@@ -152,12 +152,11 @@
             let totalPts = 0;
 
             for (let i = 1; i <= count; i++) {
-                // Загружаем только ОДНУ главную сфираль для каждой стороны
                 const data = await fetchPoints(`${RINGS_PATH}${folder}/${i}/part1.npy`);
                 if (data) {
-                    const branch = new THREE.Group();
-                    generateManualRecursive(data, 1, maxLevel, new THREE.Vector3(0,0,0), 1, branch);
-                    currentGroup.add(branch);
+                    const branchRoot = new THREE.Group();
+                    generateManualRecursive(data, 1, maxLevel, branchRoot);
+                    currentGroup.add(branchRoot);
                     totalPts += (data.length / 3) * (Math.pow(2, maxLevel) - 1);
                 }
             }
@@ -165,23 +164,29 @@
             finalize(totalPts);
         }
 
-        function generateManualRecursive(data, lvl, max, pos, scale, group) {
-            const colors = [0x00ffcc, 0x00aaff, 0x0055ff, 0xffcc00];
-            const p = createPoints(data, colors[(lvl-1)%4], scale, 0.9 / lvl);
-            p.position.copy(pos);
-            p.scale.set(scale, scale, scale);
-            group.add(p);
+        function generateManualRecursive(data, lvl, max, parentGroup) {
+            const colors = [0x00ffcc, 0x00aaff, 0xffcc00, 0xff5500];
+            
+            // Сама сфираль
+            const p = createPoints(data, colors[(lvl-1)%4], 1, 0.9 / lvl);
+            parentGroup.add(p);
 
             if (lvl < max) {
-                const nextS = scale * 0.5;
-                // Вектор 1: Смещение в начало [-150, 0, -186.2]
-                generateManualRecursive(data, lvl + 1, max, 
-                    new THREE.Vector3(pos.x - (150 * scale), pos.y, pos.z - (186.2 * scale)), 
-                    nextS, group);
-                // Вектор 2: Смещение в центр [0, 0, 0]
-                generateManualRecursive(data, lvl + 1, max, 
-                    new THREE.Vector3(pos.x, pos.y, pos.z), 
-                    nextS, group);
+                const nextScale = 0.5;
+
+                // Дочка 1: В "корневой" якорь Alpha [-150, 0, -186.2]
+                const sub1 = new THREE.Group();
+                sub1.scale.set(nextScale, nextScale, nextScale);
+                sub1.position.set(-150, 0, -186.2);
+                parentGroup.add(sub1);
+                generateManualRecursive(data, lvl + 1, max, sub1);
+
+                // Дочка 2: В "центральный" якорь Omega [0, 0, 0]
+                const sub2 = new THREE.Group();
+                sub2.scale.set(nextScale, nextScale, nextScale);
+                sub2.position.set(0, 0, 0);
+                parentGroup.add(sub2);
+                generateManualRecursive(data, lvl + 1, max, sub2);
             }
         }
 
