@@ -2,32 +2,30 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v10.0 - High Visibility</title>
+    <title>GIDEON Engine v10.1 - Ultra Bright</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
         .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 35px; height: 35px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
-        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 10, 10, 0.95); padding: 15px; border: 1px solid #00ffcc; z-index: 1000; width: 300px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 4px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.3); }
+        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 5, 5, 0.9); padding: 15px; border: 1px solid #00ffcc; z-index: 1000; width: 300px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 4px; box-shadow: 0 0 15px rgba(0, 255, 204, 0.2); }
         h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc; padding-bottom: 8px; text-align: center; }
-        .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.3); padding: 10px; border-radius: 4px; }
+        .cat-group { margin-bottom: 15px; background: rgba(0,20,20,0.4); padding: 10px; border-radius: 4px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
         input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; padding: 4px; font-size: 10px; }
         .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; }
-        .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
-        .m-btn.action { background: rgba(0, 80, 80, 0.6); border: 1px solid #00ffcc; color: #fff; font-weight: bold; padding: 10px; margin-top: 5px; width: 100%; font-size: 10px; }
+        .m-btn.action { background: rgba(0, 100, 100, 0.6); border: 1px solid #00ffcc; color: #fff; font-weight: bold; padding: 10px; margin-top: 5px; width: 100%; font-size: 10px; box-shadow: 0 0 10px rgba(0, 255, 204, 0.4); }
         #stats { font-size: 11px; margin-top: 15px; border-top: 1px solid #00ffcc33; padding-top: 10px; }
-        .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
     </style>
 </head>
 <body>
 
-    <div id="loader">GIDEON: ПРИМЕНЕНИЕ ЛЮМИНОФОРА v10.0...</div>
+    <div id="loader">GIDEON: ФОРСИРОВАНИЕ ЯРКОСТИ v10.1...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v10.0</h2>
+        <h2>GIDEON CORE v10.1</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗА / ЦЕПЬ</div>
@@ -38,7 +36,7 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">💍 КОЛЬЦЕВЫЕ ФОРМЫ (L-DEPTH)</div>
+            <div class="cat-header">💍 КОЛЬЦА (L-DEPTH)</div>
             <div style="font-size:9px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
                 УРОВЕНЬ L: <input type="number" id="manual-l-depth" value="2">
             </div>
@@ -49,13 +47,13 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🌀 АВТО-МАТРИЦА (МАТРЕШКА)</div>
+            <div class="cat-header">🌀 МАТРЕШКА (0.5)</div>
             <div style="font-size:9px; margin-bottom:5px;">L: <input type="number" id="nest-levels" value="2"> CH: <input type="number" id="nest-chain" value="4"></div>
             <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ МАТРИЦУ</button>
         </div>
 
         <div id="stats">
-            <div class="stat-row"><span style="color:#55aaaa; font-size:9px;">ВЕРШИН:</span><span id="count" style="color:#00ffcc; font-weight:bold;">0</span></div>
+            <div class="stat-row" style="display:flex; justify-content:space-between;"><span style="color:#55aaaa; font-size:9px;">ВЕРШИН:</span><span id="count" style="color:#00ffcc; font-weight:bold;">0</span></div>
         </div>
         <button class="m-btn" style="width:100%; margin-top:10px; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()">CENTER VIEW</button>
     </div>
@@ -67,8 +65,9 @@
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000000);
         camera.position.set(2000, 2000, 2000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x000000, 1);
         document.body.appendChild(renderer.domElement);
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         let currentGroup = new THREE.Group();
@@ -103,17 +102,17 @@
             } catch (e) { return null; }
         }
 
-        // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ МАКСИМАЛЬНОЙ ЯРКОСТИ ---
+        // --- ГИПЕР-ЯРКИЙ МАТЕРИАЛ ---
         function createPoints(data, color, scale = 1) {
             const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
             return new THREE.Points(geo, new THREE.PointsMaterial({ 
-                color: color, 
-                size: 3.5 * scale,             // Увеличен базовый размер
+                color: 0x00ffff,               // Смещение в сторону яркого циана
+                size: 4.5 * scale,             // Максимально жирные точки
                 transparent: true, 
-                opacity: 1.0,                  // Полная плотность
-                sizeAttenuation: true,         // Точки масштабируются при зуме
-                blending: THREE.AdditiveBlending, // Эффект неонового свечения
-                depthWrite: false              // Устранение черных ореолов
+                opacity: 1.0, 
+                sizeAttenuation: true, 
+                blending: THREE.AdditiveBlending, // Ключевой эффект суммирования яркости
+                depthWrite: false              // Убирает наложение черных пикселей
             }));
         }
 
@@ -143,12 +142,12 @@
             let pts = 0;
             for (let i = 1; i <= count; i++) {
                 const main = await fetchPoints(`${RINGS_PATH}${folder}/${i}/part1.npy`);
-                if (main) { currentGroup.add(createPoints(main, 0x00ffcc, 1)); pts += main.length/3; }
+                if (main) { currentGroup.add(createPoints(main, 0x00ffcc, 1.2)); pts += main.length/3; }
                 if (L >= 2) {
                     const s1 = await fetchPoints(`${RINGS_PATH}${folder}/${i}/sub1/part1.npy`);
                     const s2 = await fetchPoints(`${RINGS_PATH}${folder}/${i}/sub2/part1.npy`);
-                    if (s1) { currentGroup.add(createPoints(s1, 0x00aaff, 0.5)); pts += s1.length/3; }
-                    if (s2) { currentGroup.add(createPoints(s2, 0x00aaff, 0.5)); pts += s2.length/3; }
+                    if (s1) { currentGroup.add(createPoints(s1, 0x00ffff, 0.8)); pts += s1.length/3; }
+                    if (s2) { currentGroup.add(createPoints(s2, 0x00ffff, 0.8)); pts += s2.length/3; }
                 }
             }
             finalize(pts);
