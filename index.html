@@ -2,54 +2,62 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v8.9 - Full Geometry & Secure Core</title>
+    <title>GIDEON Engine v8.9.5 - Pro HUD & Stats</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
         .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 35px; height: 35px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
+        
         #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 10, 10, 0.95); padding: 15px; border: 1px solid #00ffcc; z-index: 1000; width: 300px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 4px; box-shadow: 0 0 20px rgba(0, 255, 204, 0.3); }
         h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc; padding-bottom: 8px; text-align: center; }
+        
+        /* ПЛЮШКА 1: Подсказки (Tooltips) */
+        [data-tooltip] { position: relative; cursor: help; }
+        [data-tooltip]:before {
+            content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+            background: rgba(0, 30, 30, 0.98); color: #00ffcc; border: 1px solid #00ffcc; padding: 4px 8px;
+            font-size: 9px; white-space: nowrap; display: none; z-index: 10000; border-radius: 2px; margin-bottom: 5px;
+        }
+        [data-tooltip]:hover:before { display: block; }
+
         .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.3); padding: 10px; border-radius: 4px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 5px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
         .input-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 10px; }
         input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; padding: 4px; font-size: 10px; }
         .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; }
         .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
         .m-btn.action { background: rgba(0, 80, 80, 0.6); border: 1px solid #00ffcc; color: #fff; font-weight: bold; padding: 10px; margin-top: 5px; width: 100%; font-size: 10px; }
-        #stats { font-size: 10px; margin-top: 15px; border-top: 1px solid #00ffcc33; padding-top: 10px; }
+        
+        /* ПЛЮШКА 2: Продвинутая статистика */
+        #stats { font-size: 11px; margin-top: 15px; border-top: 1px solid #00ffcc33; padding-top: 10px; }
+        .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .stat-label { color: #55aaaa; text-transform: uppercase; font-size: 9px; }
+        .stat-value { color: #00ffcc; font-weight: bold; }
+        .stat-value.warning { color: #ffaa00; text-shadow: 0 0 8px #ffaa00; }
+        .stat-value.critical { color: #ff5555; text-shadow: 0 0 8px #ff5555; }
+
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
     </style>
 </head>
 <body>
 
-    <div id="loader">GIDEON: СИНХРОНИЗАЦИЯ ГЕОМЕТРИИ...</div>
-
-    <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
+    <div id="loader">GIDEON: ЗАГРУЗКА ИНТЕРФЕЙСА...</div>
+    <div class="controls-container"><button class="control-btn" onclick="toggleUI()" data-tooltip="Скрыть/показать пульт">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ENGINE v8.9</h2>
+        <h2>GIDEON ARCHITECTURE v8.9.5</h2>
         
         <div class="cat-group">
-            <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
+            <div class="cat-header">🧱 ГЕОМЕТРИЧЕСКИЕ ЯДРА</div>
             <div class="btn-grid">
-                <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
-                <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
+                <button class="m-btn" onclick="buildBase(1)" data-tooltip="Одиночная сфираль">BASE x1</button>
+                <button class="m-btn" onclick="buildBase(2)" data-tooltip="Диполь (две сфирали 180°)">DIPOLE x2</button>
             </div>
             <div class="input-row" style="margin-top:5px;">
                 <span>ЗВЕНЬЕВ:</span>
                 <input type="number" id="simple-chain" value="4" min="1">
-                <button class="m-btn" style="width:100px" onclick="runSimpleChain()">BUILD CHAIN</button>
-            </div>
-        </div>
-
-        <div class="cat-group">
-            <div class="cat-header">💍 КОЛЬЦА (RINGS)</div>
-            <div class="btn-grid">
-                <button class="m-btn" onclick="buildRingFolder('ring3', 3)">RING x3</button>
-                <button class="m-btn" onclick="buildRingFolder('ring4', 4)">RING x4</button>
-                <button class="m-btn" onclick="buildRingFolder('ring6', 6)">RING x6</button>
-                <button class="m-btn" onclick="buildRingFolder('ring8', 8)">RING x8</button>
+                <button class="m-btn" style="width:100px" onclick="runSimpleChain()" data-tooltip="Линейная цепь сфиралей">BUILD CHAIN</button>
             </div>
         </div>
 
@@ -57,14 +65,15 @@
             <div class="cat-header">🧬 ФРАКТАЛЬНЫЙ СТРИМ</div>
             <div class="input-row"><span>ВЛОЖЕННОСТЬ (L):</span> <input type="number" id="nest-levels" value="2" min="1" max="5"></div>
             <div class="input-row"><span>ЦЕПОЧКА (CH):</span> <input type="number" id="nest-chain" value="4" min="1"></div>
-            <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ ЦЕПЬ МАТРЕШЕК</button>
+            <button class="m-btn action" onclick="buildFractalChain()" data-tooltip="Фрактальная сборка матрешек">ПОСТРОИТЬ МАТРИЦУ</button>
         </div>
 
         <div id="stats">
-            <div class="stat-row"><span>СФИРАЛЕЙ:</span> <span id="inst-count" style="color:#ffcc00">0</span></div>
-            <div class="stat-row"><span>ВЕРШИН:</span> <span id="count" style="color:#00ffcc">0</span></div>
+            <div class="stat-row"><span class="stat-label">FPS</span><span id="fps-counter" class="stat-value">0</span></div>
+            <div class="stat-row"><span class="stat-label">СФИРАЛЕЙ</span><span id="inst-count" class="stat-value">0</span></div>
+            <div class="stat-row"><span class="stat-label">ВЕРШИН</span><span id="count" class="stat-value">0</span></div>
         </div>
-        <button style="width:100%; margin-top:10px; background:transparent; border:1px solid #ffcc00; color:#ffcc00; padding:5px; cursor:pointer; font-size:9px;" onclick="centerView()">CENTER VIEW</button>
+        <button class="btn m-btn" style="width:100%; margin-top:10px; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()">CENTER VIEW</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -81,13 +90,13 @@
         let currentGroup = new THREE.Group();
         scene.add(currentGroup);
 
-        const RINGS_PATH = 'models/static/rings/';
         const STEP_Z_OLD = 372.47; 
-        const OFFSET_X = 75;
-        const OFFSET_Z = 93.12;
+        const OFFSET_X = 75; const OFFSET_Z = 93.12;
         let baseDataArray = null;
 
-        // --- ФУНКЦИЯ ЗАЩИЩЕННОЙ СБОРКИ ЯДРА ---
+        // FPS ПЕРЕМЕННЫЕ
+        let framesThisSecond = 0, lastFpsUpdate = performance.now(), fps = 0;
+
         async function loadProtectedCore() {
             const parts = ['p1.npy', 'p2.npy', 'p3.npy', 'p4.npy'];
             let combined = [];
@@ -95,82 +104,48 @@
             try {
                 for (let p of parts) {
                     const res = await fetch(`models/core_v8/${p}`);
-                    if (!res.ok) throw new Error(`Missing: ${p}`);
                     const buffer = await res.arrayBuffer();
-                    const data = new Float32Array(buffer.slice(128));
-                    combined.push(...data);
+                    combined.push(...new Float32Array(buffer.slice(128)));
                 }
                 baseDataArray = new Float32Array(combined);
-                return true;
-            } catch (e) {
-                console.error("GIDEON Core Error:", e);
-                return false;
-            } finally {
-                document.getElementById('loader').style.display = 'none';
-            }
+            } catch (e) { console.error(e); }
+            document.getElementById('loader').style.display = 'none';
         }
 
-        // --- УНИВЕРСАЛЬНЫЙ ЗАГРУЗЧИК ВНЕШНИХ ФАЙЛОВ (ДЛЯ КОЛЕЦ) ---
-        async function fetchPoints(path) {
-            const res = await fetch(path);
-            if (!res.ok) return null;
-            const buffer = await res.arrayBuffer();
-            return new Float32Array(buffer.slice(128));
+        function createPoints(color, scale = 1, opacity = 1) {
+            const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(baseDataArray, 3));
+            return new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 2 * scale, transparent: true, opacity }));
         }
 
-        function createPoints(data, color, scale = 1, opacity = 1) {
-            const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
-            const mat = new THREE.PointsMaterial({ color: color, size: 2 * scale, transparent: true, opacity: opacity });
-            return new THREE.Points(geo, mat);
-        }
-
-        // --- БАЗА И ДИПОЛЬ ---
         async function buildBase(count) {
             if (!baseDataArray) await loadProtectedCore();
-            startLoad();
+            reset();
             for (let i = 0; i < count; i++) {
-                const p = createPoints(baseDataArray, 0x00ffcc);
+                const p = createPoints(0x00ffcc);
                 if (i === 1) p.rotation.set(Math.PI, 0, Math.PI);
                 currentGroup.add(p);
             }
-            endLoad(count, (baseDataArray.length / 3) * count);
+            finalize(count, (baseDataArray.length / 3) * count);
         }
 
-        // --- ПРОСТАЯ ЦЕПОЧКА ---
         async function runSimpleChain() {
             if (!baseDataArray) await loadProtectedCore();
-            startLoad();
+            reset();
             const count = parseInt(document.getElementById('simple-chain').value);
             for (let i = 0; i < count; i++) {
-                const p = createPoints(baseDataArray, 0x00ffcc);
+                const p = createPoints(0x00ffcc);
                 p.position.z = i * STEP_Z_OLD;
                 if (i % 2 !== 0) p.rotation.set(Math.PI, 0, 0);
                 currentGroup.add(p);
             }
-            endLoad(count, (baseDataArray.length / 3) * count);
+            finalize(count, (baseDataArray.length / 3) * count);
         }
 
-        // --- КОЛЬЦА ---
-        async function buildRingFolder(folder, count) {
-            startLoad();
-            let pts = 0;
-            for (let i = 1; i <= count; i++) {
-                const data = await fetchPoints(`${RINGS_PATH}${folder}/part${i}.npy`);
-                if (data) {
-                    currentGroup.add(createPoints(data, 0x00ffcc));
-                    pts += data.length / 3;
-                }
-            }
-            endLoad(count, pts);
-        }
-
-        // --- ФРАКТАЛЬНАЯ ЦЕПЬ МАТРЕШЕК ---
         async function buildFractalChain() {
             if (!baseDataArray) await loadProtectedCore();
-            startLoad();
+            reset();
             const levels = parseInt(document.getElementById('nest-levels').value);
             const chainLen = parseInt(document.getElementById('nest-chain').value);
-            
             for (let c = 0; c < chainLen; c++) {
                 const linkGroup = new THREE.Group();
                 generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
@@ -178,36 +153,42 @@
                 if (c % 2 !== 0) linkGroup.rotation.set(Math.PI, 0, 0);
                 currentGroup.add(linkGroup);
             }
-            const spiralsPerLink = (Math.pow(2, levels) - 1);
-            endLoad(chainLen * spiralsPerLink, (baseDataArray.length / 3) * chainLen * spiralsPerLink);
+            const total = chainLen * (Math.pow(2, levels) - 1);
+            finalize(total, (baseDataArray.length / 3) * total);
         }
 
-        // --- РЕКУРСИЯ С КОРРЕКЦИЕЙ Z-СМЕЩЕНИЯ ---
         function generateRecursive(lvl, max, pos, scale, group) {
             const colors = [0x00ffcc, 0x00aaff, 0xffcc00, 0xff5500, 0xff00ff];
-            const p = createPoints(baseDataArray, colors[(lvl-1)%5], scale, lvl===1?0.4:0.9);
-            p.position.copy(pos);
-            p.scale.set(scale, scale, scale);
+            const p = createPoints(colors[(lvl-1)%5], scale, lvl===1?0.4:0.9);
+            p.position.copy(pos); p.scale.set(scale, scale, scale);
             group.add(p);
-
             if (lvl < max) {
-                const nextScale = scale * 0.5;
-                const offX = OFFSET_X * scale;
-                const offZ = OFFSET_Z * scale;
-
-                // Используем инвертированные Z для вкладывания внутрь
-                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - offX, pos.y, pos.z - offZ), nextScale, group);
-                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + offX, pos.y, pos.z + offZ), nextScale, group);
+                const nextS = scale * 0.5; const oX = OFFSET_X * scale, oZ = OFFSET_Z * scale;
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - oX, pos.y, pos.z - oZ), nextS, group);
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + oX, pos.y, pos.z + oZ), nextS, group);
             }
         }
 
-        function startLoad() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); document.getElementById('loader').style.display = 'flex'; }
-        
-        function endLoad(inst, pts) { 
+        function reset() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); }
+        function finalize(inst, pts) { 
             document.getElementById('inst-count').innerText = inst; 
             document.getElementById('count').innerText = Math.round(pts).toLocaleString(); 
-            document.getElementById('loader').style.display = 'none'; 
             setTimeout(centerView, 100); 
+        }
+
+        // ПЛЮШКА 3: Логика FPS
+        function updateFPS() {
+            framesThisSecond++;
+            const now = performance.now();
+            if (now - lastFpsUpdate >= 1000) {
+                fps = Math.round((framesThisSecond * 1000) / (now - lastFpsUpdate));
+                const el = document.getElementById('fps-counter');
+                el.innerText = fps;
+                el.className = 'stat-value';
+                if (fps < 30) el.classList.add('critical');
+                else if (fps < 50) el.classList.add('warning');
+                framesThisSecond = 0; lastFpsUpdate = now;
+            }
         }
 
         function centerView() {
@@ -220,7 +201,7 @@
         }
 
         function toggleUI() { const ui = document.getElementById('gideon-ui'); ui.style.display = ui.style.display==='none'?'block':'none'; }
-        function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); }
+        function animate() { requestAnimationFrame(animate); updateFPS(); controls.update(); renderer.render(scene, camera); }
 
         loadProtectedCore().then(() => { runSimpleChain(); animate(); });
     </script>
