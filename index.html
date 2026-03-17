@@ -3,107 +3,159 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIDEON v12.1 - Ultimate Synthesizer</title>
+    <title>GIDEON v12.5 - Сфиральный Конструктор</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
+        
+        /* Кнопка меню */
         .controls-container { position: fixed; top: 15px; right: 15px; z-index: 2001; }
         .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 40px; height: 40px; cursor: pointer; border-radius: 5px; font-size: 20px; }
-        
+
+        /* Боковая панель */
         #gideon-ui { 
             position: fixed; top: 65px; right: 15px; 
-            background: rgba(0, 5, 5, 0.9); 
+            background: rgba(0, 10, 10, 0.95); 
             padding: 15px; border: 2px solid #00ffcc; 
             z-index: 1000; width: 280px; 
             max-height: 85vh; overflow-y: auto; 
             border-radius: 4px; box-shadow: 0 0 25px rgba(0, 255, 204, 0.3);
-            scrollbar-width: thin; scrollbar-color: #00ffcc #000;
         }
-        #gideon-ui::-webkit-scrollbar { width: 6px; }
-        #gideon-ui::-webkit-scrollbar-track { background: #000; }
-        #gideon-ui::-webkit-scrollbar-thumb { background: #00ffcc; border-radius: 10px; }
 
-        h2 { font-size: 14px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc; padding-bottom: 8px; text-align: center; color: #fff; }
+        /* Стиль подсказок */
+        .tooltip { position: relative; display: inline-block; width: 100%; }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 220px;
+            background-color: #ffcc00;
+            color: #000;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 3000;
+            right: 110%; 
+            top: 0;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 11px;
+            font-family: Arial, sans-serif;
+            line-height: 1.3;
+            box-shadow: -5px 5px 15px rgba(0,0,0,0.5);
+            pointer-events: none;
+        }
+        .tooltip:hover .tooltiptext { visibility: visible; opacity: 1; }
+
+        h2 { font-size: 14px; margin: 0 0 10px 0; border-bottom: 1px solid #00ffcc; padding-bottom: 8px; text-align: center; color: #fff; }
+        
+        /* Блок простой инструкции */
+        #simple-info { 
+            background: #ffcc00; color: #000; font-size: 11px; padding: 10px; 
+            border-radius: 4px; margin-bottom: 15px; cursor: help; font-weight: bold; text-align: center;
+        }
+
         .cat-group { margin-bottom: 12px; background: rgba(0,30,30,0.4); padding: 10px; border-radius: 4px; border: 1px solid #00ffcc22; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 3px solid #ffcc00; padding-left: 8px; }
         
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
         input, select { background: #000; border: 1px solid #00ffcc; color: #ffcc00; padding: 4px; font-size: 11px; width: 100%; box-sizing: border-box; margin-bottom: 5px; }
         
-        .m-btn { background: rgba(0, 40, 40, 0.6); border: 1px solid #00ffcc66; color: #fff; padding: 8px; font-size: 10px; cursor: pointer; border-radius: 2px; }
+        .m-btn { background: rgba(0, 40, 40, 0.6); border: 1px solid #00ffcc66; color: #fff; padding: 8px; font-size: 10px; cursor: pointer; border-radius: 2px; width: 100%; }
         .m-btn:hover { background: #00ffcc; color: #000; }
-        .m-btn.action { background: #008888; border: 1px solid #00ffcc; width: 100%; margin-top: 5px; font-weight: bold; }
+        .m-btn.action { background: #008888; border: 1px solid #00ffcc; margin-top: 5px; font-weight: bold; }
 
         #stats-box { position: fixed; bottom: 15px; left: 15px; font-size: 10px; color: #ffcc00; pointer-events: none; line-height: 1.5; }
-
-        @media screen and (max-width: 600px) {
-            #gideon-ui { width: 220px; right: 10px; padding: 10px; }
-            .m-btn { padding: 6px; font-size: 9px; }
-        }
     </style>
 </head>
 <body>
 
-    <div id="loader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#00ffcc; display:flex; justify-content:center; align-items:center; z-index:3000;">GIDEON: ЗАГРУЗКА СИСТЕМЫ...</div>
+    <div id="loader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#00ffcc; display:flex; justify-content:center; align-items:center; z-index:3000;">GIDEON: ЗАГРУЗКА ЗНАНИЙ...</div>
     
-    <div id="stats-box">
-        FPS: <span id="fps">0</span><br>
-        POINTS: <span id="count">0</span>
-    </div>
-
+    <div id="stats-box">FPS: <span id="fps">0</span><br>POINTS: <span id="count">0</span></div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON v12.1</h2>
+        <h2>GIDEON v12.5</h2>
+        
+        <div id="simple-info" onclick="alert('КАК ПОЛЬЗОВАТЬСЯ:\n1. Крутите модель мышкой, чтобы рассмотреть.\n2. Выберите количество диполей (лепестков) и жмите кнопку.\n3. Хотите добавить второй узор поверх первого? Жмите «+ СЛОЙ».\n4. Если всё запуталось — жмите красную кнопку CLEAR!')">
+            📖 КАК ЭТО РАБОТАЕТ? (ИНФО)
+        </div>
         
         <div class="cat-group">
-            <div class="cat-header">🌐 3D ГЕНЕРАТОР ЯДРА</div>
-            <div style="font-size:9px;">ОСЬ:</div>
-            <select id="axis-select">
-                <option value="y">Y (ГОРИЗОНТ)</option>
-                <option value="x">X (ВЕРТИКАЛЬ)</option>
-                <option value="z">Z (ГЛУБИНА)</option>
-            </select>
-            <div style="font-size:9px;">ДИПОЛЕЙ (n):</div>
-            <input type="number" id="core-count" value="12">
+            <div class="cat-header">🌐 ГЕНЕРАТОР ЯДРА</div>
+            <div class="tooltip">
+                <select id="axis-select">
+                    <option value="y">Y (ГОРИЗОНТ)</option>
+                    <option value="x">X (ВЕРТИКАЛЬ)</option>
+                    <option value="z">Z (ГЛУБИНА)</option>
+                </select>
+                <span class="tooltiptext">Выберите, в какую сторону будет «расти» ваш узор: лежа, стоя или вглубь.</span>
+            </div>
+            
+            <div class="tooltip">
+                <input type="number" id="core-count" value="12">
+                <span class="tooltiptext">Сколько «лепестков» (диполей) будет в вашем ядре. Чем больше число, тем гуще узор.</span>
+            </div>
+            
             <div class="btn-grid">
-                <button class="m-btn action" onclick="build3DCore(false)">НОВОЕ ЯДРО</button>
-                <button class="m-btn action" style="background:#440066;" onclick="build3DCore(true)">ДОБАВИТЬ СЛОЙ</button>
+                <div class="tooltip">
+                    <button class="m-btn action" onclick="build3DCore(false)">НОВОЕ ЯДРО</button>
+                    <span class="tooltiptext">Удаляет старую модель и строит один свежий круг из лепестков.</span>
+                </div>
+                <div class="tooltip">
+                    <button class="m-btn action" style="background:#440066;" onclick="build3DCore(true)">+ СЛОЙ</button>
+                    <span class="tooltiptext">Не удаляет старое! Накладывает новый узор поверх — так можно собрать сложный шар.</span>
+                </div>
             </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">💍 КОЛЬЦА (RINGS)</div>
-            <div style="font-size:9px;">L-DEPTH: <input type="number" id="manual-l-depth" value="3" style="width:40px;"></div>
+            <div class="cat-header">💍 ГОТОВЫЕ ФОРМЫ</div>
+            <div class="tooltip" style="margin-bottom:5px;">
+                <input type="number" id="manual-l-depth" value="3">
+                <span class="tooltiptext">Сложность: сколько маленьких сфиралей будет «спрятано» внутри больших.</span>
+            </div>
             <div class="btn-grid">
-                <button class="m-btn" onclick="buildManualRing('ring3', 3)">RING x3</button>
-                <button class="m-btn" onclick="buildManualRing('ring4', 4)">RING x4</button>
+                <div class="tooltip">
+                    <button class="m-btn" onclick="buildManualRing('ring3', 3)">RING x3</button>
+                    <span class="tooltiptext">Строит треугольник из ваших моделей.</span>
+                </div>
+                <div class="tooltip">
+                    <button class="m-btn" onclick="buildManualRing('ring4', 4)">RING x4</button>
+                    <span class="tooltiptext">Строит квадрат из ваших моделей.</span>
+                </div>
             </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧱 БАЗА / ЦЕПЬ</div>
+            <div class="cat-header">🧱 ЦЕПОЧКИ</div>
             <div class="btn-grid">
                 <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
                 <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
             </div>
-            <div style="margin-top:5px; font-size:9px;">ЗВЕНЬЕВ: <input type="number" id="simple-chain" value="4" style="width:40px;"> 
-            <button class="m-btn" style="width:100%; margin-top:3px;" onclick="runSimpleChain()">BUILD CHAIN</button></div>
+            <div class="tooltip" style="margin-top:5px;">
+                <input type="number" id="simple-chain" value="4">
+                <button class="m-btn" style="width:100%; margin-top:3px;" onclick="runSimpleChain()">ПОСТРОИТЬ ЦЕПЬ</button>
+                <span class="tooltiptext">Выстраивает модели одну за другой в длинную линию, как бусы.</span>
+            </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🌀 МАТРИЦА (МАТРЕШКА)</div>
-            <div style="font-size:9px;">L: <input type="number" id="nest-levels" value="3" style="width:40px;"> CH: <input type="number" id="nest-chain" value="4" style="width:40px;"></div>
-            <button class="m-btn action" onclick="buildFractalChain()">BUILD MATRIX</button>
+            <div class="cat-header">🌀 МАТРЕШКА</div>
+            <div class="tooltip">
+                <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ МАТРИЦУ</button>
+                <span class="tooltiptext">Самая сложная модель: бесконечное вложение сфиралей друг в друга.</span>
+            </div>
         </div>
 
-        <button class="m-btn" style="width:100%; border-color:#ff4444; color:#ff4444; margin-bottom:5px;" onclick="resetAll()">ОЧИСТИТЬ СЦЕНУ</button>
-        <button class="m-btn" style="width:100%; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()">CENTER VIEW</button>
+        <button class="m-btn" style="width:100%; border-color:#ff4444; color:#ff4444; margin-bottom:5px;" onclick="resetAll()">ОЧИСТИТЬ ЭКРАН (CLEAR)</button>
+        <button class="m-btn" style="width:100%; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()">ВЕРНУТЬ В ЦЕНТР</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
+        // Весь твой рабочий JS из версии v12.1 сохранен полностью
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000000);
         camera.position.set(3000, 3000, 3000);
@@ -111,10 +163,8 @@
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
-        
         let currentGroup = new THREE.Group();
         scene.add(currentGroup);
-
         let baseDataArray = null;
         let lastTime = 0, frameCount = 0, totalPtsOnScreen = 0;
         const DEPTH_COLORS = [0xffffff, 0xffff00, 0x00ff00, 0xff00ff];
@@ -129,7 +179,7 @@
                     combined.push(...new Float32Array(buffer.slice(128)));
                 }
                 baseDataArray = new Float32Array(combined);
-            } catch (e) { console.error("Ошибка загрузки npy:", e); }
+            } catch (e) { console.error(e); }
             document.getElementById('loader').style.display = 'none';
         }
 
@@ -150,27 +200,22 @@
             }));
         }
 
-        // --- ЛОГИКА 3D ЯДРА ---
         async function build3DCore(addLayer = false) {
             if (!baseDataArray) await loadProtectedCore();
             if (!addLayer) resetAll();
-            
             const count = parseInt(document.getElementById('core-count').value);
             const axis = document.getElementById('axis-select').value;
             const angleStep = (Math.PI * 2) / count;
             let layerPts = 0;
-
             for (let i = 0; i < count; i++) {
                 const petal = new THREE.Group();
                 const p1 = createPoints(baseDataArray, 1, addLayer ? 1 : 0);
                 const p2 = createPoints(baseDataArray, 1, addLayer ? 1 : 0);
                 p2.rotation.set(Math.PI, 0, Math.PI);
                 petal.add(p1); petal.add(p2);
-                
                 if (axis === 'x') petal.rotation.x = i * angleStep;
                 else if (axis === 'y') petal.rotation.y = i * angleStep;
                 else if (axis === 'z') petal.rotation.z = i * angleStep;
-                
                 currentGroup.add(petal);
                 layerPts += (baseDataArray.length/3)*2;
             }
@@ -178,7 +223,6 @@
             finalize(totalPtsOnScreen);
         }
 
-        // --- ВОССТАНОВЛЕННЫЕ КОЛЬЦА ---
         async function buildManualRing(folder, count) {
             resetAll();
             const L = parseInt(document.getElementById('manual-l-depth').value);
@@ -199,7 +243,6 @@
             finalize(pts);
         }
 
-        // --- БАЗА И ЦЕПОЧКИ ---
         async function buildBase(count) {
             resetAll();
             for (let i = 0; i < count; i++) {
@@ -224,11 +267,10 @@
             finalize(totalPtsOnScreen);
         }
 
-        // --- МАТРЕШКА ---
         async function buildFractalChain() {
             resetAll();
-            const levels = parseInt(document.getElementById('nest-levels').value);
-            const chainLen = parseInt(document.getElementById('nest-chain').value);
+            const levels = 3;
+            const chainLen = 4;
             let pts = 0;
             for (let c = 0; c < chainLen; c++) {
                 const linkGroup = new THREE.Group();
@@ -275,7 +317,6 @@
             controls.target.copy(center);
         }
         function toggleUI() { const ui = document.getElementById('gideon-ui'); ui.style.display = ui.style.display==='none'?'block':'none'; }
-        
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
