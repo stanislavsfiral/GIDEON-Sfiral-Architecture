@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIDEON v11.1 - Full System & Core</title>
+    <title>GIDEON v11.2 - Custom Core Generator</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         
@@ -17,15 +17,14 @@
             background: rgba(0, 5, 5, 0.9); 
             padding: 15px; border: 2px solid #00ffcc; 
             z-index: 1000; width: 280px; 
-            max-height: 80vh; 
-            overflow-y: auto; /* Тот самый бегунок */
+            max-height: 85vh; 
+            overflow-y: auto; 
             border-radius: 4px; 
             box-shadow: 0 0 25px rgba(0, 255, 204, 0.3);
             scrollbar-width: thin;
             scrollbar-color: #00ffcc #000;
         }
 
-        /* Настройка бегунка для Chrome/Safari */
         #gideon-ui::-webkit-scrollbar { width: 6px; }
         #gideon-ui::-webkit-scrollbar-track { background: #000; }
         #gideon-ui::-webkit-scrollbar-thumb { background: #00ffcc; border-radius: 10px; }
@@ -43,7 +42,6 @@
 
         #stats-box { position: fixed; bottom: 15px; left: 15px; font-size: 10px; color: #ffcc00; pointer-events: none; line-height: 1.5; }
 
-        /* Адаптация под мобилки */
         @media screen and (max-width: 600px) {
             #gideon-ui { width: 220px; right: 10px; padding: 10px; }
             .m-btn { padding: 6px; font-size: 9px; }
@@ -52,7 +50,7 @@
 </head>
 <body>
 
-    <div id="loader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#00ffcc; display:flex; justify-content:center; align-items:center; z-index:3000;">GIDEON: ЗАГРУЗКА...</div>
+    <div id="loader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#00ffcc; display:flex; justify-content:center; align-items:center; z-index:3000;">GIDEON: СИНТЕЗ...</div>
     
     <div id="stats-box">
         FPS: <span id="fps">0</span><br>
@@ -62,15 +60,16 @@
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v11.1</h2>
+        <h2>GIDEON CORE v11.2</h2>
         
         <div class="cat-group">
-            <div class="cat-header">⚛️ ЯДРА (CORE)</div>
-            <div class="btn-grid">
-                <button class="m-btn" onclick="buildCore(10)">CORE x10</button>
-                <button class="m-btn" onclick="buildCore(8)">CORE x8</button>
-                <button class="m-btn" onclick="buildCore(6)">CORE x6</button>
-                <button class="m-btn" onclick="buildCore(4)">CORE x4</button>
+            <div class="cat-header">⚛️ ГЕНЕРАТОР ЯДРА (CUSTOM)</div>
+            <div style="font-size:9px; margin-bottom:5px;">ДИПОЛЕЙ (n):</div>
+            <input type="number" id="custom-core-count" value="12" style="margin-bottom:5px;">
+            <button class="m-btn action" onclick="buildCustomCore()">ПОСТРОИТЬ ЯДРО</button>
+            <div class="btn-grid" style="margin-top:8px;">
+                <button class="m-btn" onclick="buildCore(10)">PRESET x10</button>
+                <button class="m-btn" onclick="buildCore(6)">PRESET x6</button>
             </div>
         </div>
 
@@ -78,8 +77,8 @@
             <div class="cat-header">💍 КОЛЬЦА (RINGS)</div>
             <div style="font-size:9px; margin-bottom:5px;">L-DEPTH: <input type="number" id="manual-l-depth" value="3" style="width:40px;"></div>
             <div class="btn-grid">
-                <button class="m-btn" onclick="buildManualRing('ring3', 3)">RING x3 (ТРЕУГОЛЬНИК)</button>
-                <button class="m-btn" onclick="buildManualRing('ring4', 4)">RING x4 (КВАДРАТ)</button>
+                <button class="m-btn" onclick="buildManualRing('ring3', 3)">RING x3</button>
+                <button class="m-btn" onclick="buildManualRing('ring4', 4)">RING x4</button>
             </div>
         </div>
 
@@ -132,7 +131,7 @@
                     combined.push(...new Float32Array(buffer.slice(128)));
                 }
                 baseDataArray = new Float32Array(combined);
-            } catch (e) { console.error("Ошибка загрузки npy:", e); }
+            } catch (e) { console.error(e); }
             document.getElementById('loader').style.display = 'none';
         }
 
@@ -153,7 +152,13 @@
             }));
         }
 
-        // Логика Ядер
+        // --- ЛОГИКА КАСТОМНОГО ЯДРА ---
+        function buildCustomCore() {
+            const count = parseInt(document.getElementById('custom-core-count').value);
+            if (isNaN(count) || count < 1) return;
+            buildCore(count);
+        }
+
         async function buildCore(count) {
             reset();
             const angleStep = (Math.PI * 2) / count;
@@ -171,7 +176,7 @@
             finalize(pts);
         }
 
-        // Логика Колец (Треугольник/Квадрат)
+        // Остальные функции (Кольца, База, Матрешка)
         async function buildManualRing(folder, count) {
             reset();
             const L = parseInt(document.getElementById('manual-l-depth').value);
@@ -217,31 +222,33 @@
             reset();
             const levels = parseInt(document.getElementById('nest-levels').value);
             const chainLen = parseInt(document.getElementById('nest-chain').value);
-            let total = 0;
+            let totalPts = 0;
             for (let c = 0; c < chainLen; c++) {
                 const linkGroup = new THREE.Group();
-                generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
+                totalPts += generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
                 linkGroup.position.z = c * 372.47;
                 if (c % 2 !== 0) linkGroup.rotation.x = Math.PI;
                 currentGroup.add(linkGroup);
             }
-            finalize(0);
+            finalize(totalPts);
         }
 
         function generateRecursive(lvl, max, pos, scale, group) {
             const p = createPoints(baseDataArray, scale, lvl-1);
             p.position.copy(pos); p.scale.set(scale, scale, scale);
             group.add(p);
+            let currentPts = (baseDataArray.length/3);
             if (lvl < max) {
                 const nextS = scale * 0.5;
-                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - 75*scale, pos.y, pos.z - 93.12*scale), nextS, group);
-                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + 75*scale, pos.y, pos.z + 93.12*scale), nextS, group);
+                currentPts += generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - 75*scale, pos.y, pos.z - 93.12*scale), nextS, group);
+                currentPts += generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + 75*scale, pos.y, pos.z + 93.12*scale), nextS, group);
             }
+            return currentPts;
         }
 
         function reset() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); }
         function finalize(pts) { 
-            if(pts > 0) document.getElementById('count').innerText = Math.round(pts).toLocaleString(); 
+            document.getElementById('count').innerText = Math.round(pts).toLocaleString(); 
             setTimeout(centerView, 100);
         }
 
@@ -271,7 +278,7 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        loadProtectedCore().then(() => { buildCore(10); animate(0); });
+        loadProtectedCore().then(() => { buildCore(12); animate(0); });
     </script>
 </body>
 </html>
