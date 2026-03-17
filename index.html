@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v9.2 - Deep Topology</title>
+    <title>GIDEON Engine v9.2.1 - Master Topology</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -12,25 +12,25 @@
         .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.3); padding: 10px; border-radius: 4px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
-        .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; }
-        .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
+        .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; transition: all 0.2s; }
+        .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); color: #fff; }
         #stats { font-size: 11px; margin-top: 15px; border-top: 1px solid #00ffcc33; padding-top: 10px; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
         .stat-label { color: #55aaaa; text-transform: uppercase; font-size: 9px; }
         .stat-value { color: #00ffcc; font-weight: bold; }
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
-    <div id="loader">GIDEON: ГЛУБИННАЯ СБОРКА КОЛЬЦА...</div>
+    <div id="loader">ГЛУБИННЫЙ СИНТЕЗ GIDEON...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ARCHITECTURE v9.2</h2>
+        <h2>GIDEON CORE v9.2.1</h2>
         
         <div class="cat-group">
-            <div class="cat-header">🧱 БАЗА / ДИПОЛЬ</div>
+            <div class="cat-header">🧱 БАЗОВЫЕ УЗЛЫ</div>
             <div class="btn-grid">
                 <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
                 <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
@@ -38,19 +38,19 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧬 ФРАКТАЛЬНЫЕ КОЛЬЦА (РУЧНАЯ СБОРКА)</div>
+            <div class="cat-header">🧬 ФРАКТАЛЬНЫЕ КОЛЬЦА (MASTER)</div>
             <div class="btn-grid">
-                <button class="m-btn" style="border-color:#ffcc00;" onclick="buildDeepRing('ring3', 3)">MASTER RING x3</button>
-                <button class="m-btn" style="border-color:#ffcc00;" onclick="buildDeepRing('ring4', 4)">MASTER RING x4</button>
+                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildDeepRing('ring3', 3)">MASTER RING x3</button>
+                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildDeepRing('ring4', 4)">MASTER RING x4</button>
             </div>
-            <div style="font-size:9px; color:#ffcc00; margin-top:5px; text-align:center;">Загрузка иерархии 1-2-3 / sub1-sub2</div>
+            <div style="font-size:8px; color:#55aaaa; margin-top:8px; text-align:center; line-height:1.2;">СКАНИРОВАНИЕ ИЕРАРХИИ ПАПОК:<br>ROOT / [ID] / part1.npy + SUB</div>
         </div>
 
         <div id="stats">
             <div class="stat-row"><span class="stat-label">FPS</span><span id="fps-counter" class="stat-value">0</span></div>
             <div class="stat-row"><span class="stat-label">ВЕРШИН</span><span id="count" class="stat-value">0</span></div>
         </div>
-        <button class="m-btn" style="width:100%; margin-top:10px; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()">CENTER VIEW</button>
+        <button class="m-btn" style="width:100%; margin-top:10px; border-color:#00ffcc; color:#00ffcc;" onclick="centerView()">CENTER VIEW</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -58,8 +58,8 @@
 
     <script>
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000000);
-        camera.position.set(1500, 1500, 1500);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 5000000);
+        camera.position.set(2000, 2000, 2000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
@@ -82,7 +82,7 @@
                     combined.push(...new Float32Array(buffer.slice(128)));
                 }
                 baseDataArray = new Float32Array(combined);
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Core Load Error:", e); }
             document.getElementById('loader').style.display = 'none';
         }
 
@@ -97,7 +97,7 @@
 
         function createPoints(data, color, scale = 1) {
             const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
-            return new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 2 * scale, transparent: true, opacity: 0.9 }));
+            return new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 2 * scale, transparent: true, opacity: 0.85 }));
         }
 
         async function buildBase(count) {
@@ -111,37 +111,29 @@
             finalize((baseDataArray.length/3)*count);
         }
 
-        // --- ГЛУБИННЫЙ СКАНЕР ПАПОК ДЛЯ ТРЕУГОЛЬНИКА/КВАДРАТА ---
+        // --- MASTER SCANNER: ПОИСК part1.npy ВО ВСЕХ ПОДПАПКАХ ---
         async function buildDeepRing(folder, count) {
             reset();
             document.getElementById('loader').style.display = 'flex';
             let totalPts = 0;
 
             for (let i = 1; i <= count; i++) {
-                // Пути к твоим ручным сборкам
-                const mainPath = `${RINGS_PATH}${folder}/${i}/part${i}.npy`;
-                const sub1Path = `${RINGS_PATH}${folder}/${i}/sub1/part1.npy`;
-                const sub2Path = `${RINGS_PATH}${folder}/${i}/sub2/part1.npy`;
+                // Универсальный поиск: везде ищем part1.npy
+                const paths = [
+                    `${RINGS_PATH}${folder}/${i}/part1.npy`,      // Главная в папке 1, 2 или 3
+                    `${RINGS_PATH}${folder}/${i}/sub1/part1.npy`, // Дочка 1
+                    `${RINGS_PATH}${folder}/${i}/sub2/part1.npy`  // Дочка 2
+                ];
 
-                // Загружаем Большую (L1)
-                const mainData = await fetchPoints(mainPath);
-                if (mainData) {
-                    currentGroup.add(createPoints(mainData, 0x00ffcc, 1));
-                    totalPts += mainData.length / 3;
-                }
-
-                // Загружаем Дочку 1 (L2)
-                const sub1Data = await fetchPoints(sub1Path);
-                if (sub1Data) {
-                    currentGroup.add(createPoints(sub1Data, 0x00aaff, 0.5));
-                    totalPts += sub1Data.length / 3;
-                }
-
-                // Загружаем Дочку 2 (L2)
-                const sub2Data = await fetchPoints(sub2Path);
-                if (sub2Data) {
-                    currentGroup.add(createPoints(sub2Data, 0x00aaff, 0.5));
-                    totalPts += sub2Data.length / 3;
+                for (let j = 0; j < paths.length; j++) {
+                    const data = await fetchPoints(paths[j]);
+                    if (data) {
+                        // Цвет: основная - изумрудная, дочки - лазурные
+                        const color = (j === 0) ? 0x00ffcc : 0x00aaff;
+                        const scale = (j === 0) ? 1.0 : 0.5;
+                        currentGroup.add(createPoints(data, color, scale));
+                        totalPts += data.length / 3;
+                    }
                 }
             }
 
@@ -152,7 +144,7 @@
         function reset() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); }
         function finalize(pts) { 
             document.getElementById('count').innerText = Math.round(pts).toLocaleString(); 
-            setTimeout(centerView, 100); 
+            setTimeout(centerView, 150); 
         }
 
         function animate() {
@@ -171,7 +163,7 @@
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
             controls.target.copy(center);
-            camera.position.set(center.x, center.y, center.z + Math.max(size.x, size.y, size.z)*1.5);
+            camera.position.set(center.x, center.y, center.z + Math.max(size.x, size.y, size.z)*1.4);
             controls.update();
         }
 
