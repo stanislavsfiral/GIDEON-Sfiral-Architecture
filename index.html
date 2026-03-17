@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v9.9.6 - Bingle Core Integration</title>
+    <title>GIDEON Engine v9.9.7 - Multi-Model Edition</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -25,11 +25,11 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: СИНТЕЗ (VURF 1.618)...</div>
+    <div id="loader">GIDEON: СИНТЕЗ...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v9.9.6</h2>
+        <h2>GIDEON CORE v9.9.7</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
@@ -45,15 +45,20 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧬 РУЧНЫЕ КОЛЬЦА (BINGLE CORE)</div>
+            <div class="cat-header">🧬 РУЧНЫЕ КОЛЬЦА (L-Depth)</div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <span style="font-size:10px">УРОВЕНЬ DEPTH (L):</span>
+                <span style="font-size:10px">DEPTH (L):</span>
                 <input type="number" id="manual-l-depth" value="2" min="1" max="3">
             </div>
             <div class="btn-grid">
-                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildRingWithVurf('ring3', 3)">RING x3</button>
-                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildRingWithVurf('ring4', 4)">RING x4</button>
+                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildRingDeep('ring3', 3)">RING x3</button>
+                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildRingDeep('ring4', 4)">RING x4</button>
             </div>
+        </div>
+
+        <div class="cat-group">
+            <div class="cat-header">📐 ЭКСПЕРИМЕНТ: BINGLE CORE</div>
+            <button class="m-btn action" style="border-color:#ff00ff; color:#ff00ff; background:rgba(40,0,40,0.4);" onclick="buildVurfModel()">VURF-SPIRAL (1.618)</button>
         </div>
 
         <div class="cat-group">
@@ -83,9 +88,7 @@
         let currentGroup = new THREE.Group();
         scene.add(currentGroup);
 
-        // --- BINGLE CORE CONSTANTS ---
-        const VURF = 1.618034; 
-        const SAI_MAX = 1.0;
+        const VURF = 1.618034;
         const RINGS_PATH = 'models/static/rings/';
         const STEP_Z_OLD = 372.47; 
         const OFFSET_X = 75; const OFFSET_Z = 93.12;
@@ -122,6 +125,7 @@
             return new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 2 * scale, transparent: true, opacity }));
         }
 
+        // --- БАЗА И ЦЕПЬ (КАК В 8.9.7) ---
         async function buildBase(count) {
             if (!baseDataArray) await loadProtectedCore();
             reset();
@@ -146,49 +150,51 @@
             finalize(baseDataArray.length/3 * count);
         }
 
-        // --- НОВЫЙ ЗАГРУЗЧИК: МАТЕМАТИКА ЗОЛОТОГО ВУРФА ---
-        async function buildRingWithVurf(folder, count) {
+        // --- СТАНДАРТНЫЕ КОЛЬЦА ---
+        async function buildRingDeep(folder, count) {
             reset();
             document.getElementById('loader').style.display = 'flex';
             const L = parseInt(document.getElementById('manual-l-depth').value);
             let totalPts = 0;
-
             for (let i = 1; i <= count; i++) {
                 const baseDir = `${RINGS_PATH}${folder}/${i}/`;
-                
-                // Уровень 1: Мама (Базовая прозрачность)
                 const main = await fetchPoints(baseDir + 'part1.npy');
-                if (main) {
-                    currentGroup.add(createPoints(main, 0x00ffcc, 1, 0.6));
-                    totalPts += main.length / 3;
-                }
-
-                // Уровень 2: Дети (Резонанс 1/Vurf)
+                if (main) { currentGroup.add(createPoints(main, 0x00ffcc, 1)); totalPts += main.length/3; }
                 if (L >= 2) {
                     const s1 = await fetchPoints(baseDir + 'sub1/part1.npy');
                     const s2 = await fetchPoints(baseDir + 'sub2/part1.npy');
-                    const vurfScale = 1 / VURF; // 0.618
-                    if (s1) { currentGroup.add(createPoints(s1, 0x00aaff, vurfScale, 0.8)); totalPts += s1.length/3; }
-                    if (s2) { currentGroup.add(createPoints(s2, 0x00aaff, vurfScale, 0.8)); totalPts += s2.length/3; }
-                }
-
-                // Уровень 3: Внуки (Пиковая когерентность SAI = 1.0)
-                if (L >= 3) {
-                    const grandPaths = ['sub1/sub1', 'sub1/sub2', 'sub2/sub1', 'sub2/sub2'];
-                    const grandScale = 1 / (VURF * VURF); // 0.382
-                    for (let gPath of grandPaths) {
-                        const grand = await fetchPoints(baseDir + gPath + '/part1.npy');
-                        if (grand) {
-                            currentGroup.add(createPoints(grand, 0xffcc00, grandScale, SAI_MAX)); 
-                            totalPts += grand.length / 3;
-                        }
-                    }
+                    if (s1) { currentGroup.add(createPoints(s1, 0x00aaff, 0.5)); totalPts += s1.length/3; }
+                    if (s2) { currentGroup.add(createPoints(s2, 0x00aaff, 0.5)); totalPts += s2.length/3; }
                 }
             }
             document.getElementById('loader').style.display = 'none';
             finalize(totalPts);
         }
 
+        // --- НОВАЯ ОТДЕЛЬНАЯ МОДЕЛЬ ВУРФА ---
+        async function buildVurfModel() {
+            if (!baseDataArray) await loadProtectedCore();
+            reset();
+            // Строим одиночную сфираль, закрученную по 1.618
+            const linkGroup = new THREE.Group();
+            generateVurfRecursive(1, 4, new THREE.Vector3(0,0,0), 1, linkGroup);
+            currentGroup.add(linkGroup);
+            finalize(0); // Отрисовка по факту
+        }
+
+        function generateVurfRecursive(lvl, max, pos, scale, group) {
+            const p = createPoints(baseDataArray, 0xff00ff, scale, 1.0);
+            p.position.copy(pos); p.scale.set(scale, scale, scale);
+            group.add(p);
+            if (lvl < max) {
+                const nextS = scale / VURF; // Только здесь используем Вурф!
+                const offset = 200 * scale;
+                generateVurfRecursive(lvl+1, max, new THREE.Vector3(pos.x - offset, pos.y, pos.z - offset), nextS, group);
+                generateVurfRecursive(lvl+1, max, new THREE.Vector3(pos.x + offset, pos.y, pos.z + offset), nextS, group);
+            }
+        }
+
+        // --- СТАРАЯ ДОБРАЯ МАТРЕШКА (ВОССТАНОВЛЕНА) ---
         async function buildFractalChain() {
             if (!baseDataArray) await loadProtectedCore();
             reset();
@@ -201,17 +207,15 @@
                 if (c % 2 !== 0) linkGroup.rotation.set(Math.PI, 0, 0);
                 currentGroup.add(linkGroup);
             }
-            const total = chainLen * (Math.pow(2, levels) - 1);
-            finalize(baseDataArray.length/3 * total);
+            finalize(baseDataArray.length/3 * chainLen * (Math.pow(2, levels)-1));
         }
 
         function generateRecursive(lvl, max, pos, scale, group) {
-            const colors = [0x00ffcc, 0x00aaff, 0xffcc00, 0xff5500, 0xff00ff];
-            const p = createPoints(baseDataArray, colors[(lvl-1)%5], scale, lvl===1?0.4:0.9);
+            const p = createPoints(baseDataArray, 0x00ffcc, scale, 0.9);
             p.position.copy(pos); p.scale.set(scale, scale, scale);
             group.add(p);
             if (lvl < max) {
-                const nextS = scale * (1/VURF); // Применяем Вурф и в авто-генерации
+                const nextS = scale * 0.5; // Классический масштаб 0.5
                 const oX = OFFSET_X * scale, oZ = OFFSET_Z * scale;
                 generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - oX, pos.y, pos.z - oZ), nextS, group);
                 generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + oX, pos.y, pos.z + oZ), nextS, group);
@@ -246,7 +250,7 @@
 
         function toggleUI() { const ui = document.getElementById('gideon-ui'); ui.style.display = ui.style.display==='none'?'block':'none'; }
 
-        loadProtectedCore().then(() => { buildBase(1); animate(); });
+        loadProtectedCore().then(() => { runSimpleChain(); animate(); });
     </script>
 </body>
 </html>
