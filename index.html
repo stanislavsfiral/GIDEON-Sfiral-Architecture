@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v8.9.7 - Rings & HUD</title>
+    <title>GIDEON Engine v9.0 - Fractal Rings</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -12,7 +12,6 @@
         .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.3); padding: 10px; border-radius: 4px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
-        .btn-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 5px; }
         input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; padding: 4px; font-size: 10px; }
         .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; }
         .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
@@ -28,11 +27,11 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: СБОРКА ГЕОМЕТРИИ...</div>
+    <div id="loader">GIDEON: ФРАКТАЛЬНЫЙ СИНТЕЗ КОЛЬЦА...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ARCHITECTURE v8.9.7</h2>
+        <h2>GIDEON ARCHITECTURE v9.0</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
@@ -48,24 +47,29 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">💍 КОЛЬЦЕВЫЕ ФОРМЫ (RINGS)</div>
+            <div class="cat-header">🧬 ФРАКТАЛЬНЫЕ КОЛЬЦА</div>
             <div class="btn-grid">
-                <button class="m-btn" onclick="buildRingFolder('ring3', 3)" data-tooltip="Треугольник GIDEON">RING x3</button>
-                <button class="m-btn" onclick="buildRingFolder('ring4', 4)" data-tooltip="Квадрат GIDEON">RING x4</button>
-                <button class="m-btn" onclick="buildRingFolder('ring6', 6)" data-tooltip="Гексагон">RING x6</button>
-                <button class="m-btn" onclick="buildRingFolder('ring8', 8)" data-tooltip="Октагон">RING x8</button>
+                <button class="m-btn" onclick="buildRingFolder('ring3', 3)" data-tooltip="Треугольник из матрешек">F-RING x3</button>
+                <button class="m-btn" onclick="buildRingFolder('ring4', 4)" data-tooltip="Квадрат из матрешек">F-RING x4</button>
+                <button class="m-btn" onclick="buildRingFolder('ring6', 6)" data-tooltip="Гексагон из матрешек">F-RING x6</button>
+                <button class="m-btn" onclick="buildRingFolder('ring8', 8)" data-tooltip="Октагон из матрешек">F-RING x8</button>
             </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧬 ФРАКТАЛЬНЫЙ СТРИМ</div>
-            <div style="font-size:10px; margin-bottom:5px;">L: <input type="number" id="nest-levels" value="2"> CH: <input type="number" id="nest-chain" value="4"></div>
-            <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ МАТРИЦУ</button>
+            <div class="cat-header">🧬 ГЛОБАЛЬНЫЕ НАСТРОЙКИ</div>
+            <div style="font-size:10px; margin-bottom:5px;">
+                ВЛОЖЕННОСТЬ (L): <input type="number" id="nest-levels" value="2" min="1" max="5">
+            </div>
+            <div style="font-size:10px; margin-bottom:10px;">
+                ЦЕПОЧКА (CH): <input type="number" id="nest-chain" value="4">
+            </div>
+            <button class="m-btn action" onclick="buildFractalChain()" data-tooltip="Построить линейную матрицу">ПОСТРОИТЬ МАТРИЦУ</button>
         </div>
 
         <div id="stats">
             <div class="stat-row"><span class="stat-label">FPS</span><span id="fps-counter" class="stat-value">0</span></div>
-            <div class="stat-row"><span class="stat-label">СФИРАЛЕЙ</span><span id="inst-count" class="stat-value">0</span></div>
+            <div class="stat-row"><span class="stat-label">УЗЛОВ</span><span id="inst-count" class="stat-value">0</span></div>
             <div class="stat-row"><span class="stat-label">ВЕРШИН</span><span id="count" class="stat-value">0</span></div>
         </div>
         <button class="m-btn" style="width:100%; margin-top:10px; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()">CENTER VIEW</button>
@@ -106,7 +110,6 @@
             document.getElementById('loader').style.display = 'none';
         }
 
-        // ЗАГРУЗЧИК ДЛЯ КОЛЕЦ
         async function fetchPoints(path) {
             const res = await fetch(path);
             if (!res.ok) return null;
@@ -143,20 +146,36 @@
             finalize(count, (baseDataArray.length/3)*count);
         }
 
-        // ЛОГИКА ПОСТРОЕНИЯ КОЛЕЦ (ТРЕУГОЛЬНИК, КВАДРАТ И Т.Д.)
+        // --- НОВАЯ ФУНКЦИЯ: ФРАКТАЛЬНОЕ КОЛЬЦО ---
         async function buildRingFolder(folder, count) {
+            if (!baseDataArray) await loadProtectedCore();
             reset();
             document.getElementById('loader').style.display = 'flex';
-            let totalPts = 0;
+            
+            const levels = parseInt(document.getElementById('nest-levels').value);
+            let totalSpirals = 0;
+
             for (let i = 1; i <= count; i++) {
                 const data = await fetchPoints(`${RINGS_PATH}${folder}/part${i}.npy`);
                 if (data) {
-                    currentGroup.add(createPoints(data, 0x00ffcc));
-                    totalPts += data.length / 3;
+                    const linkGroup = new THREE.Group();
+                    
+                    // Генерируем матрешку вместо одной сфирали
+                    generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
+                    
+                    // Вычисляем центр оригинального звена из файла для позиционирования
+                    const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
+                    geo.computeBoundingBox();
+                    const center = new THREE.Vector3();
+                    geo.boundingBox.getCenter(center);
+                    
+                    linkGroup.position.copy(center);
+                    currentGroup.add(linkGroup);
+                    totalSpirals += (Math.pow(2, levels) - 1);
                 }
             }
             document.getElementById('loader').style.display = 'none';
-            finalize(count, totalPts);
+            finalize(totalSpirals, (baseDataArray.length/3)*totalSpirals);
         }
 
         async function buildFractalChain() {
