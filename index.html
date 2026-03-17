@@ -2,44 +2,48 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON v10.4 - Eye Comfort High Contrast</title>
+    <title>GIDEON v10.5 - Restored & Ultra Bright</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
         .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 35px; height: 35px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
-        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 5, 5, 0.95); padding: 15px; border: 1px solid #00ffcc; z-index: 1000; width: 300px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 4px; box-shadow: 0 0 40px rgba(0, 255, 204, 0.3); }
+        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 5, 5, 0.95); padding: 15px; border: 2px solid #00ffcc; z-index: 1000; width: 300px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 4px; box-shadow: 0 0 30px rgba(0, 255, 204, 0.4); }
         h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc; padding-bottom: 8px; text-align: center; text-transform: uppercase; }
-        .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.6); padding: 10px; border-radius: 4px; border: 1px solid #00ffcc44; }
-        .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 4px solid #ffcc00; padding-left: 8px; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-bottom: 5px; }
-        input { background: #000; border: 1px solid #00ffcc; color: #fff; padding: 5px; font-size: 10px; width: 100%; box-sizing: border-box; }
-        .m-btn { background: rgba(0, 50, 50, 0.7); border: 1px solid #00ffcc88; color: #fff; padding: 10px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; transition: all 0.2s; }
-        .m-btn:hover { background: #fff; color: #000; border-color: #fff; box-shadow: 0 0 15px #fff; }
-        .m-btn.action { background: #00aaaa; border: 1px solid #00ffcc; font-weight: bold; padding: 14px; margin-top: 5px; width: 100%; font-size: 11px; text-shadow: 0 0 8px #fff; }
-        #stats { font-size: 11px; margin-top: 15px; border-top: 1px solid #00ffcc44; padding-top: 10px; color: #ffcc00; }
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); display:none; justify-content:center; align-items:center; z-index:2000; color:#fff; font-size: 18px; text-shadow: 0 0 10px #00ffcc; }
+        .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.5); padding: 10px; border-radius: 4px; border: 1px solid #00ffcc33; }
+        .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 3px solid #ffcc00; padding-left: 8px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
+        input { background: #000; border: 1px solid #00ffcc; color: #ffcc00; padding: 4px; font-size: 10px; width: 100%; box-sizing: border-box; }
+        .m-btn { background: rgba(0, 40, 40, 0.6); border: 1px solid #00ffcc66; color: #fff; padding: 8px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; }
+        .m-btn:hover { background: #fff; color: #000; }
+        .m-btn.action { background: #008888; border: 1px solid #00ffcc; font-weight: bold; padding: 12px; margin-top: 5px; width: 100%; font-size: 11px; text-shadow: 0 0 5px #fff; }
+        #stats { font-size: 11px; margin-top: 15px; border-top: 1px solid #00ffcc33; padding-top: 10px; color: #ffcc00; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; font-size: 20px; letter-spacing: 5px; }
     </style>
 </head>
 <body>
 
-    <div id="loader">ГЕНЕРАЦИЯ ВЫСОКОКОНТРАСТНОЙ СЕТИ...</div>
+    <div id="loader">GIDEON: ВОССТАНОВЛЕНИЕ МОДУЛЕЙ...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v10.4</h2>
+        <h2>GIDEON CORE v10.5</h2>
         
         <div class="cat-group">
-            <div class="cat-header">🧱 ГЛАВНЫЕ ЦЕПИ (WHITE)</div>
+            <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
             <div class="btn-grid">
-                <button class="m-btn" onclick="buildBase()">BASE</button>
-                <button class="m-btn" onclick="runSimpleChain()">CHAIN x4</button>
+                <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
+                <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                <span style="font-size:9px">ЗВЕНЬЕВ:</span>
+                <input type="number" id="simple-chain" value="4" style="width:40px; margin:0 5px;">
+                <button class="m-btn" onclick="runSimpleChain()" style="flex-grow:1">BUILD CHAIN</button>
             </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">💍 КОЛЬЦА (Hierarchy)</div>
-            <div style="font-size:9px; margin-bottom:5px; color:#aaffff;">ГЛУБИНА L (1-3):</div>
-            <input type="number" id="manual-l-depth" value="3" min="1" max="3" style="margin-bottom:8px;">
+            <div class="cat-header">💍 КОЛЬЦА (L-DEPTH)</div>
+            <div style="font-size:9px; margin-bottom:5px;">ГЛУБИНА L (1-3): <input type="number" id="manual-l-depth" value="3" style="width:40px;"></div>
             <div class="btn-grid">
                 <button class="m-btn" onclick="buildManualRing('ring3', 3)">RING x3</button>
                 <button class="m-btn" onclick="buildManualRing('ring4', 4)">RING x4</button>
@@ -47,13 +51,13 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🌀 ГИПЕР-МАТРИЦА (L-Colors)</div>
-            <div style="font-size:9px; margin-bottom:5px; color:#aaffff;">УРОВНИ: <input type="number" id="nest-levels" value="3" style="width:50px;"></div>
+            <div class="cat-header">🌀 МАТРИЦА (МАТРЕШКА)</div>
+            <div style="font-size:9px; margin-bottom:5px;">L: <input type="number" id="nest-levels" value="3" style="width:40px;"> CH: <input type="number" id="nest-chain" value="4" style="width:40px;"></div>
             <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ ГИПЕР-МОДЕЛЬ</button>
         </div>
 
         <div id="stats">
-            <div style="display:flex; justify-content:space-between;"><span>АКТИВНЫХ ВЕРШИН:</span><span id="count">0</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>ВЕРШИН:</span><span id="count">0</span></div>
         </div>
         <button class="m-btn" style="width:100%; margin-top:10px; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()">CENTER VIEW</button>
     </div>
@@ -78,7 +82,7 @@
         const OFFSET_X = 75; const OFFSET_Z = 93.12;
         let baseDataArray = null;
 
-        // ЯРКАЯ ИЕРАРХИЯ ДЛЯ ЗАЩИТЫ ЗРЕНИЯ
+        // ИЕРАРХИЯ: Белый, Желтый, Зеленый, Пурпурный
         const DEPTH_COLORS = [0xffffff, 0xffff00, 0x00ff00, 0xff00ff];
 
         async function loadProtectedCore() {
@@ -108,10 +112,9 @@
         function createPoints(data, scale = 1, depthIndex = 0) {
             const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
             const finalColor = DEPTH_COLORS[depthIndex % DEPTH_COLORS.length];
-            
             return new THREE.Points(geo, new THREE.PointsMaterial({ 
                 color: finalColor, 
-                size: 5.5 * scale,             // Увеличенный размер для четкости
+                size: 5.5 * scale,
                 transparent: true, 
                 opacity: 1.0, 
                 blending: THREE.AdditiveBlending, 
@@ -120,25 +123,32 @@
             }));
         }
 
-        async function buildBase() {
+        // --- ВОССТАНОВЛЕННЫЕ БАЗОВЫЕ ФУНКЦИИ ---
+        async function buildBase(count) {
             if (!baseDataArray) await loadProtectedCore();
             reset();
-            currentGroup.add(createPoints(baseDataArray, 1, 0)); 
-            finalize(baseDataArray.length/3);
+            for (let i = 0; i < count; i++) {
+                const p = createPoints(baseDataArray, 1, 0); // Белый
+                if (i === 1) p.rotation.set(Math.PI, 0, Math.PI); // Разворот для Диполя
+                currentGroup.add(p);
+            }
+            finalize((baseDataArray.length/3) * count);
         }
 
         async function runSimpleChain() {
             if (!baseDataArray) await loadProtectedCore();
             reset();
-            for (let i = 0; i < 4; i++) {
+            const count = parseInt(document.getElementById('simple-chain').value);
+            for (let i = 0; i < count; i++) {
                 const p = createPoints(baseDataArray, 1, 0);
                 p.position.z = i * STEP_Z;
                 if (i % 2 !== 0) p.rotation.x = Math.PI;
                 currentGroup.add(p);
             }
-            finalize((baseDataArray.length/3)*4);
+            finalize((baseDataArray.length/3) * count);
         }
 
+        // --- КОЛЬЦА И МАТРИЦА ---
         async function buildManualRing(folder, count) {
             reset();
             const L = parseInt(document.getElementById('manual-l-depth').value);
@@ -162,7 +172,8 @@
             if (!baseDataArray) await loadProtectedCore();
             reset();
             const levels = parseInt(document.getElementById('nest-levels').value);
-            for (let c = 0; c < 4; c++) {
+            const chainLen = parseInt(document.getElementById('nest-chain').value);
+            for (let c = 0; c < chainLen; c++) {
                 const linkGroup = new THREE.Group();
                 generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
                 linkGroup.position.z = c * STEP_Z;
