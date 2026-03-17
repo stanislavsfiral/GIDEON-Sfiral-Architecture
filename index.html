@@ -3,39 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIDEON v13.1 - Cursor Tracking UI</title>
+    <title>GIDEON v13.2 - Interactive Architecture</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: #00ffcc; }
-        
         .controls-container { position: fixed; top: 15px; right: 15px; z-index: 2001; }
         .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 40px; height: 40px; cursor: pointer; border-radius: 5px; font-size: 20px; }
-
+        
         #gideon-ui { 
             position: fixed; top: 65px; right: 15px; 
             background: rgba(0, 15, 15, 0.98); 
             padding: 15px; border: 2px solid #00ffcc; 
             z-index: 1000; width: 280px; 
-            max-height: 85vh; overflow-y: auto; overflow-x: hidden;
+            max-height: 85vh; overflow-y: auto; 
             border-radius: 8px; box-shadow: 0 0 30px rgba(0, 255, 204, 0.4);
             scrollbar-width: thin; scrollbar-color: #00ffcc #000;
         }
 
-        /* Новая динамическая подсказка */
         #global-tooltip {
-            position: fixed;
-            display: none;
-            background: #ffcc00;
-            color: #000;
-            padding: 8px 12px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            z-index: 9999;
-            pointer-events: none; /* Чтобы не мешала кликать по кнопкам */
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            max-width: 200px;
-            text-align: center;
-            line-height: 1.2;
+            position: fixed; display: none; background: #ffcc00; color: #000;
+            padding: 8px 12px; border-radius: 4px; font-size: 11px; font-weight: bold;
+            z-index: 9999; pointer-events: none; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            max-width: 200px; text-align: center; line-height: 1.2;
         }
 
         .guide-box { background: rgba(255, 204, 0, 0.1); border: 1px dashed #ffcc00; padding: 10px; margin-bottom: 15px; font-size: 11px; color: #fff; }
@@ -43,8 +31,8 @@
         .cat-group { margin-bottom: 10px; padding: 10px; border: 1px solid #00ffcc33; border-radius: 4px; background: rgba(0,30,30,0.3); }
         .cat-header { font-size: 9px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 3px solid #ffcc00; padding-left: 8px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-        input, select { background: #000; border: 1px solid #00ffcc; color: #ffcc00; padding: 6px; font-size: 11px; width: 100%; }
-        .m-btn { background: rgba(0, 40, 40, 0.7); border: 1px solid #00ffcc66; color: #fff; padding: 10px; font-size: 10px; cursor: pointer; border-radius: 3px; }
+        input, select { background: #000; border: 1px solid #00ffcc; color: #ffcc00; padding: 6px; font-size: 11px; width: 100%; box-sizing: border-box; }
+        .m-btn { background: rgba(0, 40, 40, 0.7); border: 1px solid #00ffcc66; color: #fff; padding: 10px; font-size: 10px; cursor: pointer; border-radius: 3px; width: 100%; }
         .m-btn:hover { background: #00ffcc; color: #000; }
         .m-btn.action { background: #008888; border: 1px solid #00ffcc; font-weight: bold; }
         #stats-box { position: fixed; bottom: 15px; left: 15px; font-size: 10px; color: #ffcc00; pointer-events: none; }
@@ -53,18 +41,17 @@
 <body>
 
     <div id="global-tooltip"></div>
-
-    <div id="loader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#00ffcc; display:flex; justify-content:center; align-items:center; z-index:3000;">GIDEON v13.1</div>
+    <div id="loader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#00ffcc; display:flex; justify-content:center; align-items:center; z-index:3000;">GIDEON v13.2</div>
     <div id="stats-box">FPS: <span id="fps">0</span> | PTS: <span id="count">0</span></div>
 
     <div class="controls-container">
-        <button class="control-btn" onclick="toggleUI()" data-tip="Свернуть/развернуть меню">≡</button>
+        <button class="control-btn" onclick="toggleUI()" data-tip="Свернуть/развернуть панель управления">≡</button>
     </div>
 
     <div id="gideon-ui">
         <h2>ИНТЕРФЕЙС GIDEON</h2>
         <div class="guide-box">
-            <b>💡 СОВЕТ:</b> Подсказки теперь следуют за мышкой и не закрывают цифры ввода.
+            <b>💡 ИНСТРУКЦИЯ:</b> Подсказки следуют за мышкой, но прячутся при вводе цифр, чтобы не мешать.
         </div>
         
         <div class="cat-group">
@@ -74,46 +61,46 @@
                 <option value="x">ОСЬ X (ВЕРТИКАЛЬ)</option>
                 <option value="z">ОСЬ Z (ГЛУБИНА)</option>
             </select>
-            
-            <input type="number" id="core-count" value="12" style="margin: 5px 0;" data-tip="Введите количество лепестков">
-            
-            <div class="btn-grid">
-                <button class="m-btn action" onclick="build3DCore(false)" data-tip="Стереть всё и создать новое ядро">НОВОЕ ЯДРО</button>
-                <button class="m-btn action" style="background:#440066;" onclick="build3DCore(true)" data-tip="Добавить новый слой поверх старого">+ СЛОЙ</button>
+            <input type="number" id="core-count" value="12" style="margin-top:5px;" data-tip="Введите количество лепестков диполя">
+            <div class="btn-grid" style="margin-top:5px;">
+                <button class="m-btn action" onclick="build3DCore(false)" data-tip="Очистить сцену и создать новое ядро">НОВОЕ ЯДРО</button>
+                <button class="m-btn action" style="background:#440066;" onclick="build3DCore(true)" data-tip="Добавить новый слой поверх текущего">+ СЛОЙ</button>
             </div>
         </div>
 
         <div class="cat-group">
             <div class="cat-header">💍 КОЛЬЦА</div>
-            <input type="number" id="manual-l-depth" value="3" data-tip="Глубина вложенности матрешки">
+            <input type="number" id="manual-l-depth" value="3" data-tip="Сложность (L): количество уровней вложенности">
             <div class="btn-grid" style="margin-top:5px;">
-                <button class="m-btn" onclick="buildManualRing('ring3', 3)" data-tip="Построить треугольник">RING x3</button>
-                <button class="m-btn" onclick="buildManualRing('ring4', 4)" data-tip="Построить квадрат">RING x4</button>
+                <button class="m-btn" onclick="buildManualRing('ring3', 3)" data-tip="Построить треугольник из сфиралей">RING x3</button>
+                <button class="m-btn" onclick="buildManualRing('ring4', 4)" data-tip="Построить квадрат из сфиралей">RING x4</button>
             </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧱 БАЗА</div>
-            <div class="btn-grid">
-                <button class="m-btn" onclick="buildBase(1)" data-tip="Один виток сфирали">BASE x1</button>
-                <button class="m-btn" onclick="buildBase(2)" data-tip="Пара витков (Диполь)">DIPOLE x2</button>
-            </div>
+            <div class="cat-header">🧱 ЦЕПОЧКА</div>
+            <input type="number" id="simple-chain" value="4" data-tip="Количество (N): сколько диполей будет в линии">
+            <button class="m-btn" style="width:100%; margin-top:5px;" onclick="runSimpleChain()" data-tip="Выстроить сфирали в прямую линию">ПОСТРОИТЬ ЦЕПЬ</button>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🌀 МАТРИЦА</div>
-            <button class="m-btn action" onclick="buildFractalChain()" data-tip="Запуск фрактальной матрешки">МАТРЕШКА</button>
+            <div class="cat-header">🌀 МАТРИЦА (МАТРЕШКА)</div>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="number" id="nest-levels" value="3" data-tip="Уровни (L): глубина вложенности">
+                <input type="number" id="nest-chain" value="4" data-tip="Звенья (CH): длина основной ветки">
+            </div>
+            <button class="m-btn action" onclick="buildFractalChain()" data-tip="Запуск фрактальной матрешки">BUILD MATRIX</button>
         </div>
 
-        <button class="m-btn" style="width:100%; border-color:#ff4444; color:#ff4444; margin-bottom:5px;" onclick="resetAll()" data-tip="Полная очистка сцены">CLEAR</button>
-        <button class="m-btn" style="width:100%; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()" data-tip="Вернуть камеру к модели">CENTER</button>
+        <button class="m-btn" style="width:100%; border-color:#ff4444; color:#ff4444; margin-bottom:5px;" onclick="resetAll()" data-tip="Полная очистка всей сцены">CLEAR</button>
+        <button class="m-btn" style="width:100%; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()" data-tip="Вернуть камеру к центру модели">CENTER VIEW</button>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        // --- ЛОГИКА ПОДСКАЗОК ПОД КУРСОР ---
+        // --- УМНЫЕ ПОДСКАЗКИ ---
         const tooltip = document.getElementById('global-tooltip');
         document.addEventListener('mouseover', (e) => {
             const tip = e.target.getAttribute('data-tip');
@@ -125,11 +112,13 @@
 
         document.addEventListener('mousemove', (e) => {
             if (tooltip.style.display === 'block') {
-                // Смещаем подсказку чуть ниже и левее курсора, чтобы не закрывать его
+                // Если мышка над полем ввода, скрываем подсказку, чтобы не мешала
+                if (e.target.tagName === 'INPUT') {
+                    tooltip.style.display = 'none';
+                    return;
+                }
                 let x = e.clientX - 210; 
                 let y = e.clientY + 20;
-                
-                // Проверка границ экрана
                 if (x < 10) x = e.clientX + 20; 
                 tooltip.style.left = x + 'px';
                 tooltip.style.top = y + 'px';
@@ -140,7 +129,7 @@
             if (e.target.getAttribute('data-tip')) tooltip.style.display = 'none';
         });
 
-        // --- ОСТАЛЬНОЙ JS (БЕЗ ИЗМЕНЕНИЙ) ---
+        // --- ЛОГИКА СЦЕНЫ ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000000);
         camera.position.set(3000, 3000, 3000);
@@ -226,17 +215,6 @@
             totalPtsOnScreen = pts; finalize(pts);
         }
 
-        async function buildBase(count) {
-            if (!baseDataArray) await loadProtectedCore();
-            resetAll();
-            for (let i = 0; i < count; i++) {
-                const p = createPoints(baseDataArray, 1, 0);
-                if (i === 1) p.rotation.set(Math.PI, 0, Math.PI);
-                currentGroup.add(p);
-            }
-            totalPtsOnScreen = (baseDataArray.length/3)*count; finalize(totalPtsOnScreen);
-        }
-
         async function runSimpleChain() {
             if (!baseDataArray) await loadProtectedCore();
             resetAll();
@@ -253,14 +231,16 @@
         async function buildFractalChain() {
             if (!baseDataArray) await loadProtectedCore();
             resetAll();
+            const levels = parseInt(document.getElementById('nest-levels').value);
+            const chainLen = parseInt(document.getElementById('nest-chain').value);
             let pts = 0;
-            for (let c = 0; c < 4; c++) {
+            for (let c = 0; c < chainLen; c++) {
                 const linkGroup = new THREE.Group();
-                pts += generateRecursive(1, 3, new THREE.Vector3(0,0,c*372.47), 1, linkGroup);
+                pts += generateRecursive(1, levels, new THREE.Vector3(0,0,c*372.47), 1, linkGroup);
                 if (c % 2 !== 0) linkGroup.rotation.x = Math.PI;
                 currentGroup.add(linkGroup);
             }
-            totalPtsOnScreen = pts; finalize(pts);
+            totalPtsOnScreen = pts; finalize(totalPtsOnScreen);
         }
 
         function generateRecursive(lvl, max, pos, scale, group) {
