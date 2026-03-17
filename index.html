@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON v10.6 - Sfiral Generative</title>
+    <title>GIDEON v10.8 - Generative Alignment</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -24,20 +24,20 @@
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v10.6</h2>
+        <h2>GIDEON CORE v10.8</h2>
         
         <div class="cat-group">
-            <div class="cat-header">🧬 ГЕНЕТИКА ФОРМЫ (ОЛЕГ)</div>
-            <label>РАДИУС:</label>
+            <div class="cat-header">🧬 ГЕНЕТИКА (СИНХРОНИЗАЦИЯ)</div>
+            <label>РАДИУС (R):</label>
             <input type="range" id="param-r" min="10" max="200" value="70" oninput="updateLive()">
-            <label>ВЫСОТА ВИТКА:</label>
+            <label>ВЫСОТА (HC):</label>
             <input type="range" id="param-hc" min="10" max="200" value="80" oninput="updateLive()">
-            <label>S-УЗЕЛ:</label>
+            <label>S-УЗЕЛ (HS):</label>
             <input type="range" id="param-hs" min="5" max="100" value="20" oninput="updateLive()">
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧱 ПОСТРОЕНИЕ</div>
+            <div class="cat-header">🧱 СБОРКА БЕЗ РАЗРЫВОВ</div>
             <div class="btn-grid">
                 <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
                 <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
@@ -45,14 +45,14 @@
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
                 <span style="font-size:9px">ЗВЕНЬЕВ:</span>
                 <input type="number" id="simple-chain" value="4" style="width:40px; margin:0 5px;">
-                <button class="m-btn" onclick="runSimpleChain()" style="flex-grow:1">CHAIN</button>
+                <button class="m-btn" onclick="runSimpleChain()" style="flex-grow:1">BUILD CHAIN</button>
             </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🌀 ГИПЕР-МАТРЕШКА</div>
+            <div class="cat-header">🌀 ТОЧНАЯ МАТРЕШКА</div>
             <div style="font-size:9px; margin-bottom:5px;">L-DEPTH: <input type="number" id="nest-levels" value="3" style="width:40px;"></div>
-            <button class="m-btn action" onclick="buildFractalChain()">BUILD GENERATIVE MATRIX</button>
+            <button class="m-btn action" onclick="buildFractalChain()">BUILD ALIGNED MATRIX</button>
         </div>
 
         <div id="stats" style="font-size:11px; color:#ffcc00; padding-top:10px;">
@@ -76,37 +76,30 @@
         scene.add(currentGroup);
 
         const DEPTH_COLORS = [0xffffff, 0xffff00, 0x00ff00, 0xff00ff];
-        const STEP_Z = 372.47; 
 
-        // --- МАТЕМАТИЧЕСКОЕ ЯДРО ИЗ APP.PY ОЛЕГА ---
         function generateSfiralGeometry() {
             const r = parseFloat(document.getElementById('param-r').value);
             const hc = parseFloat(document.getElementById('param-hc').value);
             const hs = parseFloat(document.getElementById('param-hs').value);
-            
             const res = 600;
             const r_a = r / 2.0;
             let pts = [];
 
-            // S-узел (петля)
             for (let i = 0; i <= Math.floor(res * 0.3); i++) {
                 let t = i / (res * 0.3);
                 let phi = Math.PI * (1 - t);
                 pts.push(r_a + r_a * Math.cos(phi), -r_a * Math.sin(phi), (hs / 2) * t);
             }
-            // Виток
             for (let i = 1; i <= Math.floor(res * 0.7); i++) {
                 let t = i / (res * 0.7);
                 pts.push(r * Math.cos(2 * Math.PI * t), r * Math.sin(2 * Math.PI * t), (hs / 2) + hc * t);
             }
 
-            // Зеркальное отражение (Антисимметрия)
             let fullPts = [];
             for (let i = pts.length - 3; i >= 0; i -= 3) {
                 fullPts.push(-pts[i], -pts[i+1], -pts[i+2]);
             }
             fullPts.push(...pts);
-            
             return new Float32Array(fullPts);
         }
 
@@ -139,9 +132,14 @@
             reset();
             const count = parseInt(document.getElementById('simple-chain').value);
             const data = generateSfiralGeometry();
+            // ДИНАМИЧЕСКИЙ ШАГ: Высота всей сфирали (hc + hs/2) * 2
+            const hc = parseFloat(document.getElementById('param-hc').value);
+            const hs = parseFloat(document.getElementById('param-hs').value);
+            const dynamicStep = (hc + hs/2) * 2;
+
             for (let i = 0; i < count; i++) {
                 const p = createPoints(data, 1, 0);
-                p.position.z = i * (parseFloat(document.getElementById('param-hc').value) * 2);
+                p.position.z = i * dynamicStep;
                 if (i % 2 !== 0) p.rotation.x = Math.PI;
                 currentGroup.add(p);
             }
@@ -152,11 +150,14 @@
             reset();
             const levels = parseInt(document.getElementById('nest-levels').value);
             const data = generateSfiralGeometry();
-            const step = parseFloat(document.getElementById('param-hc').value) * 2;
+            const hc = parseFloat(document.getElementById('param-hc').value);
+            const hs = parseFloat(document.getElementById('param-hs').value);
+            const dynamicStep = (hc + hs/2) * 2;
+
             for (let c = 0; c < 4; c++) {
                 const linkGroup = new THREE.Group();
                 generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup, data);
-                linkGroup.position.z = c * step;
+                linkGroup.position.z = c * dynamicStep;
                 if (c % 2 !== 0) linkGroup.rotation.x = Math.PI;
                 currentGroup.add(linkGroup);
             }
@@ -169,7 +170,9 @@
             group.add(p);
             if (lvl < max) {
                 const nextS = scale * 0.5;
-                const offset = 100 * scale;
+                // АДАПТИВНЫЙ СДВИГ: привязан к радиусу (param-r)
+                const r = parseFloat(document.getElementById('param-r').value);
+                const offset = r * scale * 1.5; 
                 generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - offset, pos.y, pos.z - offset), nextS, group, data);
                 generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + offset, pos.y, pos.z + offset), nextS, group, data);
             }
