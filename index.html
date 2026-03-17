@@ -2,44 +2,54 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v10.1 - Ultra Bright</title>
+    <title>GIDEON v10.2 - Glow & Multi-Color</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
         .control-btn { background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 35px; height: 35px; cursor: pointer; border-radius: 3px; display: flex; align-items: center; justify-content: center; }
-        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 5, 5, 0.9); padding: 15px; border: 1px solid #00ffcc; z-index: 1000; width: 300px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 4px; box-shadow: 0 0 15px rgba(0, 255, 204, 0.2); }
-        h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc; padding-bottom: 8px; text-align: center; }
-        .cat-group { margin-bottom: 15px; background: rgba(0,20,20,0.4); padding: 10px; border-radius: 4px; }
-        .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
+        #gideon-ui { position: fixed; top: 70px; right: 20px; background: rgba(0, 5, 5, 0.95); padding: 15px; border: 2px solid #00ffcc; z-index: 1000; width: 300px; max-height: calc(100vh - 120px); overflow-y: auto; border-radius: 4px; box-shadow: 0 0 30px rgba(0, 255, 204, 0.4); }
+        h2 { font-size: 13px; margin: 0 0 15px 0; border-bottom: 1px solid #00ffcc; padding-bottom: 8px; text-align: center; text-transform: uppercase; }
+        .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.5); padding: 10px; border-radius: 4px; border: 1px solid #00ffcc33; }
+        .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 3px solid #ffcc00; padding-left: 8px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
-        input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; padding: 4px; font-size: 10px; }
-        .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; }
-        .m-btn.action { background: rgba(0, 100, 100, 0.6); border: 1px solid #00ffcc; color: #fff; font-weight: bold; padding: 10px; margin-top: 5px; width: 100%; font-size: 10px; box-shadow: 0 0 10px rgba(0, 255, 204, 0.4); }
-        #stats { font-size: 11px; margin-top: 15px; border-top: 1px solid #00ffcc33; padding-top: 10px; }
-        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
+        input, select { background: #000; border: 1px solid #00ffcc; color: #ffcc00; padding: 4px; font-size: 10px; width: 100%; box-sizing: border-box; }
+        .m-btn { background: rgba(0, 40, 40, 0.6); border: 1px solid #00ffcc66; color: #fff; padding: 8px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; transition: 0.2s; }
+        .m-btn:hover { background: #00ffcc; color: #000; }
+        .m-btn.action { background: #008888; border: 1px solid #00ffcc; font-weight: bold; padding: 12px; margin-top: 5px; width: 100%; font-size: 11px; text-shadow: 0 0 5px #fff; }
+        #stats { font-size: 11px; margin-top: 15px; border-top: 1px solid #00ffcc33; padding-top: 10px; color: #ffcc00; }
+        #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; font-size: 20px; letter-spacing: 5px; }
     </style>
 </head>
 <body>
 
-    <div id="loader">GIDEON: ФОРСИРОВАНИЕ ЯРКОСТИ v10.1...</div>
+    <div id="loader">GIDEON: ИНИЦИАЛИЗАЦИЯ ИЗЛУЧЕНИЯ...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v10.1</h2>
+        <h2>GIDEON CORE v10.2</h2>
         
         <div class="cat-group">
-            <div class="cat-header">🧱 БАЗА / ЦЕПЬ</div>
+            <div class="cat-header">🎨 ВИЗУАЛИЗАЦИЯ (NEW)</div>
+            <div style="font-size:9px; margin-bottom:5px;">ЦВЕТОВАЯ СХЕМА:</div>
+            <select id="color-theme">
+                <option value="default">CYAN NEON (00FFFF)</option>
+                <option value="gold">GOLDEN RESORATOR (FFCC00)</option>
+                <option value="white">PURE WHITE LIGHT (FFFFFF)</option>
+                <option value="matrix">MATRIX GREEN (00FF00)</option>
+            </select>
+        </div>
+
+        <div class="cat-group">
+            <div class="cat-header">🧱 БАЗОВЫЕ ЦЕПИ</div>
             <div class="btn-grid">
                 <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
-                <button class="m-btn" onclick="runSimpleChain()">CHAIN</button>
+                <button class="m-btn" onclick="runSimpleChain()">CHAIN x4</button>
             </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">💍 КОЛЬЦА (L-DEPTH)</div>
-            <div style="font-size:9px; margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;">
-                УРОВЕНЬ L: <input type="number" id="manual-l-depth" value="2">
-            </div>
+            <div class="cat-header">💍 КОЛЬЦА С ПОДСВЕТКОЙ</div>
+            <div style="font-size:9px; margin-bottom:5px;">УРОВЕНЬ L: <input type="number" id="manual-l-depth" value="2"></div>
             <div class="btn-grid">
                 <button class="m-btn" onclick="buildManualRing('ring3', 3)">RING x3</button>
                 <button class="m-btn" onclick="buildManualRing('ring4', 4)">RING x4</button>
@@ -47,13 +57,13 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🌀 МАТРЕШКА (0.5)</div>
-            <div style="font-size:9px; margin-bottom:5px;">L: <input type="number" id="nest-levels" value="2"> CH: <input type="number" id="nest-chain" value="4"></div>
-            <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ МАТРИЦУ</button>
+            <div class="cat-header">🌀 ГИПЕР-МАТРИЦА (МАТРЕШКА)</div>
+            <div style="font-size:9px; margin-bottom:5px;">ГЛУБИНА L: <input type="number" id="nest-levels" value="3"></div>
+            <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ ГИПЕР-МОДЕЛЬ</button>
         </div>
 
         <div id="stats">
-            <div class="stat-row" style="display:flex; justify-content:space-between;"><span style="color:#55aaaa; font-size:9px;">ВЕРШИН:</span><span id="count" style="color:#00ffcc; font-weight:bold;">0</span></div>
+            <div style="display:flex; justify-content:space-between;"><span>ВЕРШИН:</span><span id="count">0</span></div>
         </div>
         <button class="m-btn" style="width:100%; margin-top:10px; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()">CENTER VIEW</button>
     </div>
@@ -64,10 +74,10 @@
     <script>
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000000);
-        camera.position.set(2000, 2000, 2000);
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        camera.position.set(3000, 3000, 3000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x000000, 1);
+        renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
         const controls = new THREE.OrbitControls(camera, renderer.domElement);
         let currentGroup = new THREE.Group();
@@ -77,6 +87,8 @@
         const STEP_Z = 372.47; 
         const OFFSET_X = 75; const OFFSET_Z = 93.12;
         let baseDataArray = null;
+
+        const DEPTH_COLORS = [0xffffff, 0xffcc00, 0xff00ff, 0x00ffff];
 
         async function loadProtectedCore() {
             const parts = ['p1.npy', 'p2.npy', 'p3.npy', 'p4.npy'];
@@ -102,38 +114,46 @@
             } catch (e) { return null; }
         }
 
-        // --- ГИПЕР-ЯРКИЙ МАТЕРИАЛ ---
-        function createPoints(data, color, scale = 1) {
+        function getThemeColor() {
+            const theme = document.getElementById('color-theme').value;
+            if (theme === 'gold') return 0xffcc00;
+            if (theme === 'white') return 0xffffff;
+            if (theme === 'matrix') return 0x00ff00;
+            return 0x00ffff;
+        }
+
+        function createPoints(data, color, scale = 1, isLDepth = false, depthIndex = 0) {
             const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
+            const finalColor = isLDepth ? DEPTH_COLORS[depthIndex % DEPTH_COLORS.length] : color;
+            
             return new THREE.Points(geo, new THREE.PointsMaterial({ 
-                color: 0x00ffff,               // Смещение в сторону яркого циана
-                size: 4.5 * scale,             // Максимально жирные точки
+                color: finalColor, 
+                size: 5.0 * scale,             // ГИПЕР-РАЗМЕР
                 transparent: true, 
                 opacity: 1.0, 
-                sizeAttenuation: true, 
-                blending: THREE.AdditiveBlending, // Ключевой эффект суммирования яркости
-                depthWrite: false              // Убирает наложение черных пикселей
+                blending: THREE.AdditiveBlending, // ЭФФЕКТ СВЕЧЕНИЯ
+                depthWrite: false,
+                sizeAttenuation: true
             }));
         }
 
-        async function buildBase(count) {
+        async function buildBase() {
             if (!baseDataArray) await loadProtectedCore();
             reset();
-            currentGroup.add(createPoints(baseDataArray, 0x00ffcc));
+            currentGroup.add(createPoints(baseDataArray, getThemeColor()));
             finalize(baseDataArray.length/3);
         }
 
         async function runSimpleChain() {
             if (!baseDataArray) await loadProtectedCore();
             reset();
-            const count = 4;
-            for (let i = 0; i < count; i++) {
-                const p = createPoints(baseDataArray, 0x00ffcc);
+            for (let i = 0; i < 4; i++) {
+                const p = createPoints(baseDataArray, getThemeColor());
                 p.position.z = i * STEP_Z;
                 if (i % 2 !== 0) p.rotation.x = Math.PI;
                 currentGroup.add(p);
             }
-            finalize((baseDataArray.length/3)*count);
+            finalize((baseDataArray.length/3)*4);
         }
 
         async function buildManualRing(folder, count) {
@@ -142,12 +162,14 @@
             let pts = 0;
             for (let i = 1; i <= count; i++) {
                 const main = await fetchPoints(`${RINGS_PATH}${folder}/${i}/part1.npy`);
-                if (main) { currentGroup.add(createPoints(main, 0x00ffcc, 1.2)); pts += main.length/3; }
+                if (main) { currentGroup.add(createPoints(main, getThemeColor(), 1.2, true, 0)); pts += main.length/3; }
                 if (L >= 2) {
                     const s1 = await fetchPoints(`${RINGS_PATH}${folder}/${i}/sub1/part1.npy`);
+                    if (s1) { currentGroup.add(createPoints(s1, 0, 0.7, true, 1)); pts += s1.length/3; }
+                }
+                if (L >= 3) {
                     const s2 = await fetchPoints(`${RINGS_PATH}${folder}/${i}/sub2/part1.npy`);
-                    if (s1) { currentGroup.add(createPoints(s1, 0x00ffff, 0.8)); pts += s1.length/3; }
-                    if (s2) { currentGroup.add(createPoints(s2, 0x00ffff, 0.8)); pts += s2.length/3; }
+                    if (s2) { currentGroup.add(createPoints(s2, 0, 0.4, true, 2)); pts += s2.length/3; }
                 }
             }
             finalize(pts);
@@ -157,7 +179,7 @@
             if (!baseDataArray) await loadProtectedCore();
             reset();
             const levels = parseInt(document.getElementById('nest-levels').value);
-            const chainLen = parseInt(document.getElementById('nest-chain').value);
+            const chainLen = 4;
             for (let c = 0; c < chainLen; c++) {
                 const linkGroup = new THREE.Group();
                 generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
@@ -169,7 +191,7 @@
         }
 
         function generateRecursive(lvl, max, pos, scale, group) {
-            const p = createPoints(baseDataArray, 0x00ffcc, scale);
+            const p = createPoints(baseDataArray, 0, scale, true, lvl-1);
             p.position.copy(pos); p.scale.set(scale, scale, scale);
             group.add(p);
             if (lvl < max) {
@@ -191,7 +213,7 @@
             const box = new THREE.Box3().setFromObject(currentGroup);
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
-            camera.position.set(center.x, center.y, center.z + Math.max(size.x, size.y, size.z)*1.5);
+            camera.position.set(center.x, center.y, center.z + Math.max(size.x, size.y, size.z)*1.8);
             controls.target.copy(center); controls.update();
         }
         function toggleUI() { const ui = document.getElementById('gideon-ui'); ui.style.display = ui.style.display==='none'?'block':'none'; }
