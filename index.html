@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v9.6.2 - Precision Fractal</title>
+    <title>GIDEON Engine v8.9.7 - Rings & HUD</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -12,6 +12,7 @@
         .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.3); padding: 10px; border-radius: 4px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
+        .btn-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4px; margin-bottom: 5px; }
         input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; padding: 4px; font-size: 10px; }
         .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; }
         .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
@@ -20,22 +21,24 @@
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
         .stat-label { color: #55aaaa; text-transform: uppercase; font-size: 9px; }
         .stat-value { color: #00ffcc; font-weight: bold; }
+        [data-tooltip] { position: relative; cursor: help; }
+        [data-tooltip]:hover:before { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #000; color: #00ffcc; border: 1px solid #00ffcc; padding: 4px; font-size: 9px; white-space: nowrap; z-index: 10000; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); display:none; justify-content:center; align-items:center; z-index:2000; color:#00ffcc; }
     </style>
 </head>
 <body>
 
-    <div id="loader">GIDEON: ТОПОЛОГИЧЕСКИЙ СИНТЕЗ...</div>
+    <div id="loader">GIDEON: СБОРКА ГЕОМЕТРИИ...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v9.6.2</h2>
+        <h2>GIDEON ARCHITECTURE v8.9.7</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
             <div class="btn-grid">
-                <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
-                <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
+                <button class="m-btn" onclick="buildBase(1)" data-tooltip="Базовая сфираль">BASE x1</button>
+                <button class="m-btn" onclick="buildBase(2)" data-tooltip="Диполь (двойная)">DIPOLE x2</button>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
                 <span style="font-size:10px">ЗВЕНЬЕВ:</span>
@@ -45,27 +48,24 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧬 ГЕОМЕТРИЧЕСКИЙ ФРАКТАЛ</div>
+            <div class="cat-header">💍 КОЛЬЦЕВЫЕ ФОРМЫ (RINGS)</div>
             <div class="btn-grid">
-                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildAutoDeepRing('ring3', 3)">MASTER RING x3</button>
-                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildAutoDeepRing('ring4', 4)">MASTER RING x4</button>
+                <button class="m-btn" onclick="buildRingFolder('ring3', 3)" data-tooltip="Треугольник GIDEON">RING x3</button>
+                <button class="m-btn" onclick="buildRingFolder('ring4', 4)" data-tooltip="Квадрат GIDEON">RING x4</button>
+                <button class="m-btn" onclick="buildRingFolder('ring6', 6)" data-tooltip="Гексагон">RING x6</button>
+                <button class="m-btn" onclick="buildRingFolder('ring8', 8)" data-tooltip="Октагон">RING x8</button>
             </div>
-            <div style="font-size:8px; color:#55aaaa; text-align:center; margin-top:4px;">(Использует локальные якоря Alpha/Omega)</div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🌀 АВТО-МАТРИЦА (МАТРЕШКА)</div>
-            <div style="font-size:10px; margin-bottom:5px;">
-                L (Уровни): <input type="number" id="nest-levels" value="4" min="1" max="6">
-            </div>
-            <div style="font-size:10px; margin-bottom:5px;">
-                CH (Цепь): <input type="number" id="nest-chain" value="1">
-            </div>
+            <div class="cat-header">🧬 ФРАКТАЛЬНЫЙ СТРИМ</div>
+            <div style="font-size:10px; margin-bottom:5px;">L: <input type="number" id="nest-levels" value="2"> CH: <input type="number" id="nest-chain" value="4"></div>
             <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ МАТРИЦУ</button>
         </div>
 
         <div id="stats">
             <div class="stat-row"><span class="stat-label">FPS</span><span id="fps-counter" class="stat-value">0</span></div>
+            <div class="stat-row"><span class="stat-label">СФИРАЛЕЙ</span><span id="inst-count" class="stat-value">0</span></div>
             <div class="stat-row"><span class="stat-label">ВЕРШИН</span><span id="count" class="stat-value">0</span></div>
         </div>
         <button class="m-btn" style="width:100%; margin-top:10px; border-color:#ffcc00; color:#ffcc00;" onclick="centerView()">CENTER VIEW</button>
@@ -76,8 +76,8 @@
 
     <script>
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000000);
-        camera.position.set(2500, 2500, 2500);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 2000000);
+        camera.position.set(1500, 1500, 1500);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
@@ -106,16 +106,15 @@
             document.getElementById('loader').style.display = 'none';
         }
 
+        // ЗАГРУЗЧИК ДЛЯ КОЛЕЦ
         async function fetchPoints(path) {
-            try {
-                const res = await fetch(path);
-                if (!res.ok) return null;
-                const buffer = await res.arrayBuffer();
-                return new Float32Array(buffer.slice(128));
-            } catch (e) { return null; }
+            const res = await fetch(path);
+            if (!res.ok) return null;
+            const buffer = await res.arrayBuffer();
+            return new Float32Array(buffer.slice(128));
         }
 
-        function createPoints(data, color, scale = 1, opacity = 0.8) {
+        function createPoints(data, color, scale = 1, opacity = 1) {
             const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
             return new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 2 * scale, transparent: true, opacity }));
         }
@@ -128,7 +127,7 @@
                 if (i === 1) p.rotation.set(Math.PI, 0, Math.PI);
                 currentGroup.add(p);
             }
-            finalize((baseDataArray.length/3)*count);
+            finalize(count, (baseDataArray.length/3)*count);
         }
 
         async function runSimpleChain() {
@@ -141,53 +140,23 @@
                 if (i % 2 !== 0) p.rotation.set(Math.PI, 0, 0);
                 currentGroup.add(p);
             }
-            finalize((baseDataArray.length/3)*count);
+            finalize(count, (baseDataArray.length/3)*count);
         }
 
-        // --- ИСПРАВЛЕННЫЙ MASTER RING: ЛОКАЛЬНАЯ РЕКУРСИЯ ---
-        async function buildAutoDeepRing(folder, count) {
+        // ЛОГИКА ПОСТРОЕНИЯ КОЛЕЦ (ТРЕУГОЛЬНИК, КВАДРАТ И Т.Д.)
+        async function buildRingFolder(folder, count) {
             reset();
             document.getElementById('loader').style.display = 'flex';
-            const maxLevel = parseInt(document.getElementById('nest-levels').value);
             let totalPts = 0;
-
             for (let i = 1; i <= count; i++) {
-                const data = await fetchPoints(`${RINGS_PATH}${folder}/${i}/part1.npy`);
+                const data = await fetchPoints(`${RINGS_PATH}${folder}/part${i}.npy`);
                 if (data) {
-                    const branchRoot = new THREE.Group();
-                    generateManualRecursive(data, 1, maxLevel, branchRoot);
-                    currentGroup.add(branchRoot);
-                    totalPts += (data.length / 3) * (Math.pow(2, maxLevel) - 1);
+                    currentGroup.add(createPoints(data, 0x00ffcc));
+                    totalPts += data.length / 3;
                 }
             }
             document.getElementById('loader').style.display = 'none';
-            finalize(totalPts);
-        }
-
-        function generateManualRecursive(data, lvl, max, parentGroup) {
-            const colors = [0x00ffcc, 0x00aaff, 0xffcc00, 0xff5500];
-            
-            // Сама сфираль
-            const p = createPoints(data, colors[(lvl-1)%4], 1, 0.9 / lvl);
-            parentGroup.add(p);
-
-            if (lvl < max) {
-                const nextScale = 0.5;
-
-                // Дочка 1: В "корневой" якорь Alpha [-150, 0, -186.2]
-                const sub1 = new THREE.Group();
-                sub1.scale.set(nextScale, nextScale, nextScale);
-                sub1.position.set(-150, 0, -186.2);
-                parentGroup.add(sub1);
-                generateManualRecursive(data, lvl + 1, max, sub1);
-
-                // Дочка 2: В "центральный" якорь Omega [0, 0, 0]
-                const sub2 = new THREE.Group();
-                sub2.scale.set(nextScale, nextScale, nextScale);
-                sub2.position.set(0, 0, 0);
-                parentGroup.add(sub2);
-                generateManualRecursive(data, lvl + 1, max, sub2);
-            }
+            finalize(count, totalPts);
         }
 
         async function buildFractalChain() {
@@ -203,7 +172,7 @@
                 currentGroup.add(linkGroup);
             }
             const total = chainLen * (Math.pow(2, levels) - 1);
-            finalize((baseDataArray.length/3)*total);
+            finalize(total, (baseDataArray.length/3)*total);
         }
 
         function generateRecursive(lvl, max, pos, scale, group) {
@@ -219,9 +188,10 @@
         }
 
         function reset() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); }
-        function finalize(pts) { 
+        function finalize(inst, pts) { 
+            document.getElementById('inst-count').innerText = inst; 
             document.getElementById('count').innerText = Math.round(pts).toLocaleString(); 
-            setTimeout(centerView, 150); 
+            setTimeout(centerView, 100); 
         }
 
         function animate() {
@@ -234,7 +204,6 @@
             }
             controls.update(); renderer.render(scene, camera);
         }
-
         function centerView() {
             const box = new THREE.Box3().setFromObject(currentGroup);
             const center = box.getCenter(new THREE.Vector3());
@@ -243,10 +212,9 @@
             camera.position.set(center.x, center.y, center.z + Math.max(size.x, size.y, size.z)*1.5);
             controls.update();
         }
-
         function toggleUI() { const ui = document.getElementById('gideon-ui'); ui.style.display = ui.style.display==='none'?'block':'none'; }
 
-        loadProtectedCore().then(() => { buildBase(1); animate(); });
+        loadProtectedCore().then(() => { runSimpleChain(); animate(); });
     </script>
 </body>
 </html>
