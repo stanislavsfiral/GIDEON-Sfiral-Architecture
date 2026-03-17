@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v9.2 - Manual Topology</title>
+    <title>GIDEON Engine v9.8 - Final Integration</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -12,8 +12,10 @@
         .cat-group { margin-bottom: 15px; background: rgba(0,30,30,0.3); padding: 10px; border-radius: 4px; }
         .cat-header { font-size: 10px; color: #ffcc00; margin-bottom: 8px; text-transform: uppercase; border-left: 2px solid #ffcc00; padding-left: 8px; }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 5px; }
+        input { background: #000; border: 1px solid #00ffcc33; color: #ffcc00; width: 45px; padding: 4px; font-size: 10px; }
         .m-btn { background: rgba(0, 40, 40, 0.4); border: 1px solid #00ffcc33; color: #aaffff; padding: 6px; font-size: 9px; cursor: pointer; border-radius: 2px; text-align: center; }
         .m-btn:hover { border-color: #00ffcc; background: rgba(0, 60, 60, 0.6); }
+        .m-btn.action { background: rgba(0, 80, 80, 0.6); border: 1px solid #00ffcc; color: #fff; font-weight: bold; padding: 10px; margin-top: 5px; width: 100%; font-size: 10px; }
         #stats { font-size: 11px; margin-top: 15px; border-top: 1px solid #00ffcc33; padding-top: 10px; }
         .stat-row { display: flex; justify-content: space-between; margin-bottom: 6px; }
         .stat-label { color: #55aaaa; text-transform: uppercase; font-size: 9px; }
@@ -23,27 +25,39 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: СБОРКА РУЧНОЙ ГЕОМЕТРИИ...</div>
+    <div id="loader">GIDEON: СИНТЕЗ v9.8...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON ARCHITECTURE v9.2</h2>
+        <h2>GIDEON ARCHITECTURE v9.8</h2>
         
         <div class="cat-group">
-            <div class="cat-header">🧱 БАЗА / ДИПОЛЬ</div>
+            <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
             <div class="btn-grid">
                 <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
                 <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
             </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:5px;">
+                <span style="font-size:10px">ЗВЕНЬЕВ:</span>
+                <input type="number" id="simple-chain" value="4">
+                <button class="m-btn" onclick="runSimpleChain()" style="width:80px">BUILD</button>
+            </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧬 ФРАКТАЛЬНЫЕ КОЛЬЦА (РУЧНАЯ СБОРКА)</div>
+            <div class="cat-header">🧬 РУЧНЫЕ КОЛЬЦА (ПАПКИ 1-4)</div>
             <div class="btn-grid">
-                <button class="m-btn" style="border-color:#ffcc00;" onclick="buildDeepRing('ring3', 3)">MASTER RING x3</button>
-                <button class="m-btn" style="border-color:#ffcc00;" onclick="buildDeepRing('ring4', 4)">MASTER RING x4</button>
+                <button class="m-btn" style="border-color:#ffcc00;" onclick="buildManualRing('ring3', 3)">RING x3</button>
+                <button class="m-btn" style="border-color:#ffcc00;" onclick="buildManualRing('ring4', 4)">RING x4</button>
+                <button class="m-btn" onclick="buildManualRing('ring6', 6)">RING x6</button>
+                <button class="m-btn" onclick="buildManualRing('ring8', 8)">RING x8</button>
             </div>
-            <div style="font-size:9px; color:#ffcc00; margin-top:5px; text-align:center;">Загрузка иерархии: папки 1-2-3 / sub1-sub2</div>
+        </div>
+
+        <div class="cat-group">
+            <div class="cat-header">🌀 АВТО-МАТРИЦА (ФРАКТАЛЬНЫЙ СТРИМ)</div>
+            <div style="font-size:10px; margin-bottom:5px;">L: <input type="number" id="nest-levels" value="2"> CH: <input type="number" id="nest-chain" value="4"></div>
+            <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ МАТРИЦУ</button>
         </div>
 
         <div id="stats">
@@ -58,7 +72,7 @@
 
     <script>
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 5000000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000000);
         camera.position.set(2000, 2000, 2000);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -68,6 +82,8 @@
         scene.add(currentGroup);
 
         const RINGS_PATH = 'models/static/rings/';
+        const STEP_Z_OLD = 372.47; 
+        const OFFSET_X = 75; const OFFSET_Z = 93.12;
         let baseDataArray = null;
         let framesThisSecond = 0, lastFpsUpdate = performance.now();
 
@@ -95,9 +111,9 @@
             } catch (e) { return null; }
         }
 
-        function createPoints(data, color, scale = 1) {
+        function createPoints(data, color, scale = 1, opacity = 0.9) {
             const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
-            return new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 2 * scale, transparent: true, opacity: 0.9 }));
+            return new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 2 * scale, transparent: true, opacity }));
         }
 
         async function buildBase(count) {
@@ -108,40 +124,65 @@
                 if (i === 1) p.rotation.set(Math.PI, 0, Math.PI);
                 currentGroup.add(p);
             }
-            finalize((baseDataArray.length/3)*count);
+            finalize(baseDataArray.length/3 * count);
         }
 
-        async function buildDeepRing(folder, count) {
+        async function runSimpleChain() {
+            if (!baseDataArray) await loadProtectedCore();
+            reset();
+            const count = parseInt(document.getElementById('simple-chain').value);
+            for (let i = 0; i < count; i++) {
+                const p = createPoints(baseDataArray, 0x00ffcc);
+                p.position.z = i * STEP_Z_OLD;
+                if (i % 2 !== 0) p.rotation.set(Math.PI, 0, 0);
+                currentGroup.add(p);
+            }
+            finalize(baseDataArray.length/3 * count);
+        }
+
+        // --- УНИВЕРСАЛЬНЫЙ ЗАГРУЗЧИК ДЛЯ ТВОИХ ПАПОК ---
+        async function buildManualRing(folder, count) {
             reset();
             document.getElementById('loader').style.display = 'flex';
             let totalPts = 0;
-
             for (let i = 1; i <= count; i++) {
-                // Прямая загрузка твоих расставленных файлов
-                const mainPath = `${RINGS_PATH}${folder}/${i}/part1.npy`;
-                const sub1Path = `${RINGS_PATH}${folder}/${i}/sub1/part1.npy`;
-                const sub2Path = `${RINGS_PATH}${folder}/${i}/sub2/part1.npy`;
-
-                const mainData = await fetchPoints(mainPath);
-                if (mainData) {
-                    currentGroup.add(createPoints(mainData, 0x00ffcc, 1));
-                    totalPts += mainData.length / 3;
-                }
-
-                const sub1Data = await fetchPoints(sub1Path);
-                if (sub1Data) {
-                    currentGroup.add(createPoints(sub1Data, 0x00aaff, 0.5));
-                    totalPts += sub1Data.length / 3;
-                }
-
-                const sub2Data = await fetchPoints(sub2Path);
-                if (sub2Data) {
-                    currentGroup.add(createPoints(sub2Data, 0x00aaff, 0.5));
-                    totalPts += sub2Data.length / 3;
+                // Прямой доступ к твоим расставленным файлам в папках 1, 2, 3, 4
+                const data = await fetchPoints(`${RINGS_PATH}${folder}/${i}/part1.npy`);
+                if (data) {
+                    currentGroup.add(createPoints(data, 0x00ffcc));
+                    totalPts += data.length / 3;
                 }
             }
             document.getElementById('loader').style.display = 'none';
             finalize(totalPts);
+        }
+
+        async function buildFractalChain() {
+            if (!baseDataArray) await loadProtectedCore();
+            reset();
+            const levels = parseInt(document.getElementById('nest-levels').value);
+            const chainLen = parseInt(document.getElementById('nest-chain').value);
+            for (let c = 0; c < chainLen; c++) {
+                const linkGroup = new THREE.Group();
+                generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
+                linkGroup.position.z = c * STEP_Z_OLD;
+                if (c % 2 !== 0) linkGroup.rotation.set(Math.PI, 0, 0);
+                currentGroup.add(linkGroup);
+            }
+            const total = chainLen * (Math.pow(2, levels) - 1);
+            finalize(baseDataArray.length/3 * total);
+        }
+
+        function generateRecursive(lvl, max, pos, scale, group) {
+            const colors = [0x00ffcc, 0x00aaff, 0xffcc00, 0xff5500, 0xff00ff];
+            const p = createPoints(baseDataArray, colors[(lvl-1)%5], scale, lvl===1?0.4:0.9);
+            p.position.copy(pos); p.scale.set(scale, scale, scale);
+            group.add(p);
+            if (lvl < max) {
+                const nextS = scale * 0.5; const oX = OFFSET_X * scale, oZ = OFFSET_Z * scale;
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - oX, pos.y, pos.z - oZ), nextS, group);
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + oX, pos.y, pos.z + oZ), nextS, group);
+            }
         }
 
         function reset() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); }
