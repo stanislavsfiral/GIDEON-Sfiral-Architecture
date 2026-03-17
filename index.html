@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>GIDEON v13.3 - Precision Chain</title>
+    <title>GIDEON v13.4 - Resonance 372.72</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Segoe UI', sans-serif; color: #00ffcc; }
         .controls-container { position: fixed; top: 15px; right: 15px; z-index: 2001; }
@@ -40,20 +40,19 @@
 <body>
 
     <div id="global-tooltip"></div>
-    <div id="loader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#00ffcc; display:flex; justify-content:center; align-items:center; z-index:3000;">GIDEON v13.3</div>
+    <div id="loader" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#000; color:#00ffcc; display:flex; justify-content:center; align-items:center; z-index:3000;">GIDEON v13.4: 372.72</div>
     <div id="stats-box">FPS: <span id="fps">0</span> | PTS: <span id="count">0</span></div>
 
     <div class="controls-container">
-        <button class="control-btn" onclick="toggleUI()" data-tip="Скрыть/показать меню">≡</button>
+        <button class="control-btn" onclick="toggleUI()" data-tip="Меню управления">≡</button>
     </div>
 
     <div id="gideon-ui">
         <h2>КОНСТРУКТОР GIDEON</h2>
 
         <div class="cat-group">
-            <div class="cat-header">⚙️ НАСТРОЙКА ДИСТАНЦИИ</div>
-            <div style="font-size:9px; color:#ffcc00; margin-bottom:2px;">ШАГ ПО ОСИ Z (ПЛОТНОСТЬ):</div>
-            <input type="number" id="chain-step" value="372.47" step="10" data-tip="Уменьшите до 250 для плотной стыковки или увеличьте для разрыва">
+            <div class="cat-header">⚙️ ПЛОТНОСТЬ (ШАГ Z)</div>
+            <input type="number" id="chain-step" value="372.72" step="0.01" data-tip="Эталонный шаг для бесшовной стыковки">
         </div>
         
         <div class="cat-group">
@@ -63,7 +62,7 @@
                 <option value="x">ОСЬ X (ВЕРТИКАЛЬ)</option>
                 <option value="z">ОСЬ Z (ГЛУБИНА)</option>
             </select>
-            <input type="number" id="core-count" value="12" style="margin-top:5px;" data-tip="Кол-во лепестков">
+            <input type="number" id="core-count" value="12" style="margin-top:5px;" data-tip="Количество лепестков">
             <div class="btn-grid" style="margin-top:5px;">
                 <button class="m-btn action" onclick="build3DCore(false)">НОВОЕ ЯДРО</button>
                 <button class="m-btn action" style="background:#440066;" onclick="build3DCore(true)">+ СЛОЙ</button>
@@ -72,17 +71,17 @@
 
         <div class="cat-group">
             <div class="cat-header">🧱 ЦЕПОЧКА</div>
-            <input type="number" id="simple-chain" value="4" data-tip="Количество звеньев">
-            <button class="m-btn" style="width:100%; margin-top:5px;" onclick="runSimpleChain()" data-tip="Линейная цепь с выбранным шагом">BUILD CHAIN</button>
+            <input type="number" id="simple-chain" value="4" data-tip="Кол-во звеньев">
+            <button class="m-btn" style="width:100%; margin-top:5px;" onclick="runSimpleChain()" data-tip="Построить цепь с шагом 372.72">BUILD CHAIN</button>
         </div>
 
         <div class="cat-group">
             <div class="cat-header">🌀 МАТРИЦА (МАТРЕШКА)</div>
             <div style="display:flex; gap:5px; margin-bottom:5px;">
-                <input type="number" id="nest-levels" value="3" data-tip="Уровни (L)">
-                <input type="number" id="nest-chain" value="4" data-tip="Звенья (CH)">
+                <input type="number" id="nest-levels" value="3" data-tip="Уровни L">
+                <input type="number" id="nest-chain" value="4" data-tip="Звенья CH">
             </div>
-            <button class="m-btn action" onclick="buildFractalChain()" data-tip="Фрактальная цепь с выбранным шагом">BUILD MATRIX</button>
+            <button class="m-btn action" onclick="buildFractalChain()" data-tip="Фрактал с шагом 372.72">BUILD MATRIX</button>
         </div>
 
         <button class="m-btn" style="width:100%; border-color:#ff4444; color:#ff4444; margin-bottom:5px;" onclick="resetAll()">CLEAR</button>
@@ -93,7 +92,6 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        // --- УМНЫЕ ПОДСКАЗКИ ---
         const tooltip = document.getElementById('global-tooltip');
         document.addEventListener('mouseover', (e) => {
             const tip = e.target.getAttribute('data-tip');
@@ -111,7 +109,6 @@
             if (e.target.getAttribute('data-tip')) tooltip.style.display = 'none';
         });
 
-        // --- THREE.JS LOGIC ---
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000000);
         camera.position.set(3000, 3000, 3000);
@@ -179,7 +176,6 @@
                 const p2 = createPoints(baseDataArray, 1, 0);
                 p2.rotation.set(Math.PI, 0, Math.PI);
                 pGroup.add(p1); pGroup.add(p2);
-                
                 pGroup.position.z = i * step;
                 if (i % 2 !== 0) pGroup.rotation.x = Math.PI;
                 currentGroup.add(pGroup);
@@ -197,7 +193,7 @@
             let pts = 0;
             for (let c = 0; c < chainLen; c++) {
                 const linkGroup = new THREE.Group();
-                pts += generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup);
+                pts += generateRecursive(1, levels, new THREE.Vector3(0,0,0), 1, linkGroup, step);
                 linkGroup.position.z = c * step;
                 if (c % 2 !== 0) linkGroup.rotation.x = Math.PI;
                 currentGroup.add(linkGroup);
@@ -205,15 +201,18 @@
             totalPtsOnScreen = pts; finalize(totalPtsOnScreen);
         }
 
-        function generateRecursive(lvl, max, pos, scale, group) {
+        function generateRecursive(lvl, max, pos, scale, group, step) {
             const p = createPoints(baseDataArray, scale, lvl-1);
             p.position.copy(pos); p.scale.set(scale, scale, scale);
             group.add(p);
             let pts = (baseDataArray.length/3);
             if (lvl < max) {
                 const s = scale * 0.5;
-                pts += generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - 75*scale, pos.y, pos.z - 93.12*scale), s, group);
-                pts += generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + 75*scale, pos.y, pos.z + 93.12*scale), s, group);
+                // Адаптивное смещение на основе эталона
+                const shiftX = 75 * scale;
+                const shiftZ = (step / 4) * scale; 
+                pts += generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - shiftX, pos.y, pos.z - shiftZ), s, group, step);
+                pts += generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + shiftX, pos.y, pos.z + shiftZ), s, group, step);
             }
             return pts;
         }
@@ -240,7 +239,6 @@
             camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
-
         loadProtectedCore().then(() => { build3DCore(false); animate(0); });
     </script>
 </body>
