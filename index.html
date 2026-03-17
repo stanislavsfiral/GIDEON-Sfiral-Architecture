@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v9.9.9 - Clean Stable</title>
+    <title>GIDEON Engine v10.0 - High Visibility</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -23,11 +23,11 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: ВОССТАНОВЛЕНИЕ СТАБИЛЬНОСТИ...</div>
+    <div id="loader">GIDEON: ПРИМЕНЕНИЕ ЛЮМИНОФОРА v10.0...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v9.9.9</h2>
+        <h2>GIDEON CORE v10.0</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗА / ЦЕПЬ</div>
@@ -103,9 +103,18 @@
             } catch (e) { return null; }
         }
 
+        // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ДЛЯ МАКСИМАЛЬНОЙ ЯРКОСТИ ---
         function createPoints(data, color, scale = 1) {
             const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
-            return new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 2 * scale, transparent: true, opacity: 0.9 }));
+            return new THREE.Points(geo, new THREE.PointsMaterial({ 
+                color: color, 
+                size: 3.5 * scale,             // Увеличен базовый размер
+                transparent: true, 
+                opacity: 1.0,                  // Полная плотность
+                sizeAttenuation: true,         // Точки масштабируются при зуме
+                blending: THREE.AdditiveBlending, // Эффект неонового свечения
+                depthWrite: false              // Устранение черных ореолов
+            }));
         }
 
         async function buildBase(count) {
