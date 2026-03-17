@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v9.9 - Deep Integration</title>
+    <title>GIDEON Engine v9.9.5 - Dynamic Hybrid</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -25,11 +25,11 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: ГЛУБИННЫЙ СИНТЕЗ v9.9...</div>
+    <div id="loader">GIDEON: СИНТЕЗ v9.9.5...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v9.9</h2>
+        <h2>GIDEON CORE v9.9.5</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
@@ -45,16 +45,19 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧬 РУЧНЫЕ КОЛЬЦА (ГЛУБОКАЯ СБОРКА)</div>
-            <div class="btn-grid">
-                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildManualDeepRing('ring3', 3)">RING x3</button>
-                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildManualDeepRing('ring4', 4)">RING x4</button>
+            <div class="cat-header">🧬 РУЧНЫЕ КОЛЬЦА (ДЕТАЛИЗАЦИЯ)</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:10px">УРОВЕНЬ DEPTH (L):</span>
+                <input type="number" id="manual-l-depth" value="2" min="1" max="3">
             </div>
-            <div style="font-size:8px; color:#55aaaa; text-align:center; margin-top:4px;">(Сканирование sub1/sub2 в папках 1-4)</div>
+            <div class="btn-grid">
+                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildRingWithDepth('ring3', 3)">RING x3</button>
+                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildRingWithDepth('ring4', 4)">RING x4</button>
+            </div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🌀 АВТО-МАТРИЦА (ФРАКТАЛЬНЫЙ СТРИМ)</div>
+            <div class="cat-header">🌀 АВТО-МАТРИЦА (МАТРЕШКА)</div>
             <div style="font-size:10px; margin-bottom:5px;">L: <input type="number" id="nest-levels" value="2"> CH: <input type="number" id="nest-chain" value="4"></div>
             <button class="m-btn action" onclick="buildFractalChain()">ПОСТРОИТЬ МАТРИЦУ</button>
         </div>
@@ -139,25 +142,40 @@
             finalize(baseDataArray.length/3 * count);
         }
 
-        // --- ГЛУБОКИЙ ЗАГРУЗЧИК (СМОТРИТ В SUB1/SUB2) ---
-        async function buildManualDeepRing(folder, count) {
+        // --- УНИВЕРСАЛЬНЫЙ ЗАГРУЗЧИК С ПЕРЕКЛЮЧЕНИЕМ DEPTH ---
+        async function buildRingWithDepth(folder, count) {
             reset();
             document.getElementById('loader').style.display = 'flex';
+            const L = parseInt(document.getElementById('manual-l-depth').value);
             let totalPts = 0;
+
             for (let i = 1; i <= count; i++) {
                 const baseDir = `${RINGS_PATH}${folder}/${i}/`;
-                // Список путей для проверки внутри каждой ветки
-                const paths = [
-                    { path: baseDir + 'part1.npy', scale: 1.0, color: 0x00ffcc },
-                    { path: baseDir + 'sub1/part1.npy', scale: 0.5, color: 0x00aaff },
-                    { path: baseDir + 'sub2/part1.npy', scale: 0.5, color: 0x00aaff }
-                ];
+                
+                // Уровень 1: Основа (Мама)
+                const main = await fetchPoints(baseDir + 'part1.npy');
+                if (main) {
+                    currentGroup.add(createPoints(main, 0x00ffcc, 1));
+                    totalPts += main.length / 3;
+                }
 
-                for (let item of paths) {
-                    const data = await fetchPoints(item.path);
-                    if (data) {
-                        currentGroup.add(createPoints(data, item.color, item.scale));
-                        totalPts += data.length / 3;
+                // Уровень 2: Дети (sub1, sub2)
+                if (L >= 2) {
+                    const s1 = await fetchPoints(baseDir + 'sub1/part1.npy');
+                    const s2 = await fetchPoints(baseDir + 'sub2/part1.npy');
+                    if (s1) { currentGroup.add(createPoints(s1, 0x00aaff, 0.5)); totalPts += s1.length/3; }
+                    if (s2) { currentGroup.add(createPoints(s2, 0x00aaff, 0.5)); totalPts += s2.length/3; }
+                }
+
+                // Уровень 3: Внуки (sub1/sub1 и т.д.)
+                if (L >= 3) {
+                    const grandPaths = ['sub1/sub1', 'sub1/sub2', 'sub2/sub1', 'sub2/sub2'];
+                    for (let gPath of grandPaths) {
+                        const grand = await fetchPoints(baseDir + gPath + '/part1.npy');
+                        if (grand) {
+                            currentGroup.add(createPoints(grand, 0xffcc00, 0.25));
+                            totalPts += grand.length / 3;
+                        }
                     }
                 }
             }
