@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON v10.8 - Generative Alignment</title>
+    <title>GIDEON v10.9 - Perfect Alignment</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -24,7 +24,7 @@
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v10.8</h2>
+        <h2>GIDEON CORE v10.9</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧬 ГЕНЕТИКА (СИНХРОНИЗАЦИЯ)</div>
@@ -37,7 +37,7 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧱 СБОРКА БЕЗ РАЗРЫВОВ</div>
+            <div class="cat-header">🧱 БАЗОВАЯ СБОРКА</div>
             <div class="btn-grid">
                 <button class="m-btn" onclick="buildBase(1)">BASE x1</button>
                 <button class="m-btn" onclick="buildBase(2)">DIPOLE x2</button>
@@ -50,9 +50,9 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🌀 ТОЧНАЯ МАТРЕШКА</div>
+            <div class="cat-header">🌀 ИДЕАЛЬНАЯ МАТРЕШКА</div>
             <div style="font-size:9px; margin-bottom:5px;">L-DEPTH: <input type="number" id="nest-levels" value="3" style="width:40px;"></div>
-            <button class="m-btn action" onclick="buildFractalChain()">BUILD ALIGNED MATRIX</button>
+            <button class="m-btn action" onclick="buildFractalChain()">BUILD PERFECT MATRIX</button>
         </div>
 
         <div id="stats" style="font-size:11px; color:#ffcc00; padding-top:10px;">
@@ -85,14 +85,17 @@
             const r_a = r / 2.0;
             let pts = [];
 
+            // Центрирование по Z: вычитаем половину общей высоты (hc + hs/2)
+            const zOffset = (hc + hs / 2) / 2;
+
             for (let i = 0; i <= Math.floor(res * 0.3); i++) {
                 let t = i / (res * 0.3);
                 let phi = Math.PI * (1 - t);
-                pts.push(r_a + r_a * Math.cos(phi), -r_a * Math.sin(phi), (hs / 2) * t);
+                pts.push(r_a + r_a * Math.cos(phi), -r_a * Math.sin(phi), (hs / 2) * t - zOffset);
             }
             for (let i = 1; i <= Math.floor(res * 0.7); i++) {
                 let t = i / (res * 0.7);
-                pts.push(r * Math.cos(2 * Math.PI * t), r * Math.sin(2 * Math.PI * t), (hs / 2) + hc * t);
+                pts.push(r * Math.cos(2 * Math.PI * t), r * Math.sin(2 * Math.PI * t), (hs / 2) + hc * t - zOffset);
             }
 
             let fullPts = [];
@@ -132,7 +135,6 @@
             reset();
             const count = parseInt(document.getElementById('simple-chain').value);
             const data = generateSfiralGeometry();
-            // ДИНАМИЧЕСКИЙ ШАГ: Высота всей сфирали (hc + hs/2) * 2
             const hc = parseFloat(document.getElementById('param-hc').value);
             const hs = parseFloat(document.getElementById('param-hs').value);
             const dynamicStep = (hc + hs/2) * 2;
@@ -170,11 +172,15 @@
             group.add(p);
             if (lvl < max) {
                 const nextS = scale * 0.5;
-                // АДАПТИВНЫЙ СДВИГ: привязан к радиусу (param-r)
                 const r = parseFloat(document.getElementById('param-r').value);
-                const offset = r * scale * 1.5; 
-                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - offset, pos.y, pos.z - offset), nextS, group, data);
-                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + offset, pos.y, pos.z + offset), nextS, group, data);
+                const hc = parseFloat(document.getElementById('param-hc').value);
+                
+                // ИДЕАЛЬНОЕ СМЕЩЕНИЕ: привязано к геометрии Олега
+                const offsetX = r * scale;
+                const offsetZ = hc * scale; 
+
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - offsetX, pos.y, pos.z - offsetZ), nextS, group, data);
+                generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + offsetX, pos.y, pos.z + offsetZ), nextS, group, data);
             }
         }
 
