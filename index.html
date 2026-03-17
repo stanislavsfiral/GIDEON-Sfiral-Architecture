@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v9.9.5 - Dynamic Hybrid</title>
+    <title>GIDEON Engine v9.9.6 - Bingle Core Integration</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -25,11 +25,11 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: СИНТЕЗ v9.9.5...</div>
+    <div id="loader">GIDEON: СИНТЕЗ (VURF 1.618)...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON CORE v9.9.5</h2>
+        <h2>GIDEON CORE v9.9.6</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
@@ -45,14 +45,14 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧬 РУЧНЫЕ КОЛЬЦА (ДЕТАЛИЗАЦИЯ)</div>
+            <div class="cat-header">🧬 РУЧНЫЕ КОЛЬЦА (BINGLE CORE)</div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <span style="font-size:10px">УРОВЕНЬ DEPTH (L):</span>
                 <input type="number" id="manual-l-depth" value="2" min="1" max="3">
             </div>
             <div class="btn-grid">
-                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildRingWithDepth('ring3', 3)">RING x3</button>
-                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildRingWithDepth('ring4', 4)">RING x4</button>
+                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildRingWithVurf('ring3', 3)">RING x3</button>
+                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildRingWithVurf('ring4', 4)">RING x4</button>
             </div>
         </div>
 
@@ -83,9 +83,13 @@
         let currentGroup = new THREE.Group();
         scene.add(currentGroup);
 
+        // --- BINGLE CORE CONSTANTS ---
+        const VURF = 1.618034; 
+        const SAI_MAX = 1.0;
         const RINGS_PATH = 'models/static/rings/';
         const STEP_Z_OLD = 372.47; 
         const OFFSET_X = 75; const OFFSET_Z = 93.12;
+
         let baseDataArray = null;
         let framesThisSecond = 0, lastFpsUpdate = performance.now();
 
@@ -142,8 +146,8 @@
             finalize(baseDataArray.length/3 * count);
         }
 
-        // --- УНИВЕРСАЛЬНЫЙ ЗАГРУЗЧИК С ПЕРЕКЛЮЧЕНИЕМ DEPTH ---
-        async function buildRingWithDepth(folder, count) {
+        // --- НОВЫЙ ЗАГРУЗЧИК: МАТЕМАТИКА ЗОЛОТОГО ВУРФА ---
+        async function buildRingWithVurf(folder, count) {
             reset();
             document.getElementById('loader').style.display = 'flex';
             const L = parseInt(document.getElementById('manual-l-depth').value);
@@ -152,28 +156,30 @@
             for (let i = 1; i <= count; i++) {
                 const baseDir = `${RINGS_PATH}${folder}/${i}/`;
                 
-                // Уровень 1: Основа (Мама)
+                // Уровень 1: Мама (Базовая прозрачность)
                 const main = await fetchPoints(baseDir + 'part1.npy');
                 if (main) {
-                    currentGroup.add(createPoints(main, 0x00ffcc, 1));
+                    currentGroup.add(createPoints(main, 0x00ffcc, 1, 0.6));
                     totalPts += main.length / 3;
                 }
 
-                // Уровень 2: Дети (sub1, sub2)
+                // Уровень 2: Дети (Резонанс 1/Vurf)
                 if (L >= 2) {
                     const s1 = await fetchPoints(baseDir + 'sub1/part1.npy');
                     const s2 = await fetchPoints(baseDir + 'sub2/part1.npy');
-                    if (s1) { currentGroup.add(createPoints(s1, 0x00aaff, 0.5)); totalPts += s1.length/3; }
-                    if (s2) { currentGroup.add(createPoints(s2, 0x00aaff, 0.5)); totalPts += s2.length/3; }
+                    const vurfScale = 1 / VURF; // 0.618
+                    if (s1) { currentGroup.add(createPoints(s1, 0x00aaff, vurfScale, 0.8)); totalPts += s1.length/3; }
+                    if (s2) { currentGroup.add(createPoints(s2, 0x00aaff, vurfScale, 0.8)); totalPts += s2.length/3; }
                 }
 
-                // Уровень 3: Внуки (sub1/sub1 и т.д.)
+                // Уровень 3: Внуки (Пиковая когерентность SAI = 1.0)
                 if (L >= 3) {
                     const grandPaths = ['sub1/sub1', 'sub1/sub2', 'sub2/sub1', 'sub2/sub2'];
+                    const grandScale = 1 / (VURF * VURF); // 0.382
                     for (let gPath of grandPaths) {
                         const grand = await fetchPoints(baseDir + gPath + '/part1.npy');
                         if (grand) {
-                            currentGroup.add(createPoints(grand, 0xffcc00, 0.25));
+                            currentGroup.add(createPoints(grand, 0xffcc00, grandScale, SAI_MAX)); 
                             totalPts += grand.length / 3;
                         }
                     }
@@ -205,7 +211,8 @@
             p.position.copy(pos); p.scale.set(scale, scale, scale);
             group.add(p);
             if (lvl < max) {
-                const nextS = scale * 0.5; const oX = OFFSET_X * scale, oZ = OFFSET_Z * scale;
+                const nextS = scale * (1/VURF); // Применяем Вурф и в авто-генерации
+                const oX = OFFSET_X * scale, oZ = OFFSET_Z * scale;
                 generateRecursive(lvl+1, max, new THREE.Vector3(pos.x - oX, pos.y, pos.z - oZ), nextS, group);
                 generateRecursive(lvl+1, max, new THREE.Vector3(pos.x + oX, pos.y, pos.z + oZ), nextS, group);
             }
