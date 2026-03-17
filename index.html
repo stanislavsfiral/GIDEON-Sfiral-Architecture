@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>GIDEON Engine v9.5 - Hybrid Fractal Core</title>
+    <title>GIDEON Engine v9.6 - Auto-Fractal Master</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', monospace; color: #00ffcc; }
         .controls-container { position: fixed; top: 20px; right: 20px; z-index: 2001; }
@@ -25,11 +25,11 @@
 </head>
 <body>
 
-    <div id="loader">GIDEON: СИНТЕЗ ГЕОМЕТРИИ...</div>
+    <div id="loader">GIDEON: ФРАКТАЛЬНЫЙ СИНТЕЗ...</div>
     <div class="controls-container"><button class="control-btn" onclick="toggleUI()">≡</button></div>
 
     <div id="gideon-ui">
-        <h2>GIDEON HYBRID v9.5</h2>
+        <h2>GIDEON CORE v9.6</h2>
         
         <div class="cat-group">
             <div class="cat-header">🧱 БАЗА / ДИПОЛЬ / ЦЕПЬ</div>
@@ -45,18 +45,16 @@
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🧬 РУЧНЫЕ ФРАКТАЛЬНЫЕ КОЛЬЦА</div>
+            <div class="cat-header">🧬 ГЕОМЕТРИЧЕСКИЙ ФРАКТАЛ</div>
             <div class="btn-grid">
-                <button class="m-btn" style="border-color:#ffcc00;" onclick="buildDeepRing('ring3', 3)">MASTER RING x3</button>
-                <button class="m-btn" style="border-color:#ffcc00;" onclick="buildDeepRing('ring4', 4)">MASTER RING x4</button>
-                <button class="m-btn" onclick="buildDeepRing('ring6', 6)">RING x6</button>
-                <button class="m-btn" onclick="buildDeepRing('ring8', 8)">RING x8</button>
+                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildAutoDeepRing('ring3', 3)">MASTER RING x3</button>
+                <button class="m-btn" style="border-color:#ffcc00; color:#ffcc00;" onclick="buildAutoDeepRing('ring4', 4)">MASTER RING x4</button>
             </div>
-            <div style="font-size:8px; color:#55aaaa; text-align:center; margin-top:4px;">(Загрузка из 1,2,3 / sub1,sub2)</div>
+            <div style="font-size:8px; color:#55aaaa; text-align:center; margin-top:4px;">(Использует уровень L для вложенности)</div>
         </div>
 
         <div class="cat-group">
-            <div class="cat-header">🌀 АВТО-ФРАКТАЛЬНЫЙ СТРИМ</div>
+            <div class="cat-header">🌀 АВТО-МАТРИЦА (МАТРЕШКА)</div>
             <div style="font-size:10px; margin-bottom:5px;">
                 L (Уровни): <input type="number" id="nest-levels" value="2" min="1" max="5">
             </div>
@@ -78,8 +76,8 @@
 
     <script>
         const scene = new THREE.Scene();
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 5000000);
-        camera.position.set(2000, 2000, 2000);
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 10000000);
+        camera.position.set(2500, 2500, 2500);
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
@@ -117,12 +115,11 @@
             } catch (e) { return null; }
         }
 
-        function createPoints(data, color, scale = 1, opacity = 0.85) {
+        function createPoints(data, color, scale = 1, opacity = 0.8) {
             const geo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(data, 3));
             return new THREE.Points(geo, new THREE.PointsMaterial({ color, size: 2 * scale, transparent: true, opacity }));
         }
 
-        // --- БЛОК БАЗОВЫХ ФУНКЦИЙ ---
         async function buildBase(count) {
             if (!baseDataArray) await loadProtectedCore();
             reset();
@@ -147,32 +144,47 @@
             finalize((baseDataArray.length/3)*count);
         }
 
-        // --- БЛОК РУЧНЫХ КОЛЕЦ (v9.2 LOGIC) ---
-        async function buildDeepRing(folder, count) {
+        // --- НОВАЯ ФУНКЦИЯ: АВТО-ФРАКТАЛИЗАЦИЯ ТРЕУГОЛЬНИКА ---
+        async function buildAutoDeepRing(folder, count) {
             reset();
             document.getElementById('loader').style.display = 'flex';
+            const maxLevel = parseInt(document.getElementById('nest-levels').value);
             let totalPts = 0;
+
             for (let i = 1; i <= count; i++) {
-                const paths = [
-                    `${RINGS_PATH}${folder}/${i}/part1.npy`,
-                    `${RINGS_PATH}${folder}/${i}/sub1/part1.npy`,
-                    `${RINGS_PATH}${folder}/${i}/sub2/part1.npy`
-                ];
-                for (let j = 0; j < paths.length; j++) {
-                    const data = await fetchPoints(paths[j]);
-                    if (data) {
-                        const color = (j === 0) ? 0x00ffcc : 0x00aaff;
-                        const scale = (j === 0) ? 1.0 : 0.5;
-                        currentGroup.add(createPoints(data, color, scale));
-                        totalPts += data.length / 3;
-                    }
+                // Загружаем только ОДНУ главную сфираль для каждой стороны
+                const data = await fetchPoints(`${RINGS_PATH}${folder}/${i}/part1.npy`);
+                if (data) {
+                    const branch = new THREE.Group();
+                    generateManualRecursive(data, 1, maxLevel, new THREE.Vector3(0,0,0), 1, branch);
+                    currentGroup.add(branch);
+                    totalPts += (data.length / 3) * (Math.pow(2, maxLevel) - 1);
                 }
             }
             document.getElementById('loader').style.display = 'none';
             finalize(totalPts);
         }
 
-        // --- БЛОК АВТО-ФРАКТАЛОВ (v8.9.7 LOGIC) ---
+        function generateManualRecursive(data, lvl, max, pos, scale, group) {
+            const colors = [0x00ffcc, 0x00aaff, 0x0055ff, 0xffcc00];
+            const p = createPoints(data, colors[(lvl-1)%4], scale, 0.9 / lvl);
+            p.position.copy(pos);
+            p.scale.set(scale, scale, scale);
+            group.add(p);
+
+            if (lvl < max) {
+                const nextS = scale * 0.5;
+                // Вектор 1: Смещение в начало [-150, 0, -186.2]
+                generateManualRecursive(data, lvl + 1, max, 
+                    new THREE.Vector3(pos.x - (150 * scale), pos.y, pos.z - (186.2 * scale)), 
+                    nextS, group);
+                // Вектор 2: Смещение в центр [0, 0, 0]
+                generateManualRecursive(data, lvl + 1, max, 
+                    new THREE.Vector3(pos.x, pos.y, pos.z), 
+                    nextS, group);
+            }
+        }
+
         async function buildFractalChain() {
             if (!baseDataArray) await loadProtectedCore();
             reset();
@@ -185,8 +197,8 @@
                 if (c % 2 !== 0) linkGroup.rotation.set(Math.PI, 0, 0);
                 currentGroup.add(linkGroup);
             }
-            const totalS = chainLen * (Math.pow(2, levels) - 1);
-            finalize((baseDataArray.length/3) * totalS);
+            const total = chainLen * (Math.pow(2, levels) - 1);
+            finalize((baseDataArray.length/3)*total);
         }
 
         function generateRecursive(lvl, max, pos, scale, group) {
@@ -201,7 +213,6 @@
             }
         }
 
-        // --- СЕРВИСНЫЕ ФУНКЦИИ ---
         function reset() { scene.remove(currentGroup); currentGroup = new THREE.Group(); scene.add(currentGroup); }
         function finalize(pts) { 
             document.getElementById('count').innerText = Math.round(pts).toLocaleString(); 
@@ -224,7 +235,7 @@
             const center = box.getCenter(new THREE.Vector3());
             const size = box.getSize(new THREE.Vector3());
             controls.target.copy(center);
-            camera.position.set(center.x, center.y, center.z + Math.max(size.x, size.y, size.z)*1.4);
+            camera.position.set(center.x, center.y, center.z + Math.max(size.x, size.y, size.z)*1.5);
             controls.update();
         }
 
