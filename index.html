@@ -16,6 +16,21 @@
         .val { color: #fff; float: right; }
         #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); display:none; justify-content:center; align-items:center; z-index:2000; letter-spacing:3px; }
         #hud-toggle { position: absolute; bottom: 15px; left: 15px; z-index: 2001; background: #000; color: #ffcc00; border: 1px solid #ffcc00; width: 25px; height: 25px; cursor: pointer; }
+
+        /* ОБНОВЛЕННЫЕ СТИЛИ ДЛЯ ИНФО */
+        #infoModal {
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 10, 10, 0.98); border: 2px solid #00ffcc;
+            padding: 30px; z-index: 3000; width: 450px; display: none;
+            box-shadow: 0 0 50px rgba(0, 255, 204, 0.3);
+            max-height: 85vh; overflow-y: auto;
+        }
+        #infoModal h3 { color: #00ffcc; margin-top: 0; letter-spacing: 2px; border-bottom: 1px solid #00ffcc55; padding-bottom: 10px; font-size: 16px; }
+        #infoModal h4 { color: #ffcc00; margin: 15px 0 5px 0; font-size: 13px; text-transform: uppercase; }
+        #infoModal p { font-size: 13px; line-height: 1.6; color: #aaffff; margin-bottom: 10px; }
+        #infoModal b { color: #00ffcc; }
+        #closeInfo { cursor: pointer; color: #ff0055; float: right; font-weight: bold; border: 1px solid #ff0055; padding: 2px 8px; font-size: 10px; }
+        #closeInfo:hover { background: #ff0055; color: #fff; }
     </style>
 </head>
 <body>
@@ -23,11 +38,25 @@
     <div id="loader">GIDEON: DECRYPTING QUANTUM DATA...</div>
     <button id="hud-toggle" onclick="toggleHUD()">_</button>
 
+    <div id="infoModal">
+        <span id="closeInfo" onclick="closeModal()">ЗАКРЫТЬ [X]</span>
+        <h3>ДОБРО ПОЖАЛОВАТЬ В ТЕРМИНАЛ GIDEON</h3>
+        <p>Вы стоите на пороге новой реальности. Это не просто 3D-графика — перед вами <b>живая карта сверхплотных структур Вселенной</b>, воплощенная в цифре.</p>
+        
+        <h4>Почему это важно для вас?</h4>
+        <p>Там, где обычные системы слепнут, GIDEON видит. Мы мгновенно разворачиваем <b>1.5 миллиона точек данных</b> прямо в вашем браузере. Благодаря защищенному алгоритму <b>«Сфираль»</b>, информация не просто передается — она «свивается» заново, оставаясь недосягаемой для посторонних. Это ваша личная зона квантовой чистоты.</p>
+        
+        <h4>Управление реальностью:</h4>
+        <p>• <b>Движение (Мышь):</b> Вращайте объект, изучая его грани.<br>
+           • <b>Погружение (Колесо):</b> Войдите внутрь структуры. Посмотрите, как хаос превращается в порядок.<br>
+           • <b>S-VISION:</b> Активируйте режим квантового анализа, чтобы узреть невидимое.</p>
+    </div>
+
     <div id="gideon-ui">
         <h2>GIDEON CORE V3.9.9.9.5</h2>
-        <div class="label">Архив (STATIC):</div>
+        <div class="label">Архив (SECURE V3):</div>
         <select id="staticSelector" onchange="switchModel('static', this.value)"></select>
-        <div class="label">Динамика (DYNAMIC):</div>
+        <div class="label">Динамика (ORIGINAL):</div>
         <select id="dynamicSelector" onchange="switchModel('dynamic', this.value)"></select>
         
         <div class="label">S-Vision HUD:</div>
@@ -40,6 +69,8 @@
             <div>РЕЖИМ: <span id="modeDisplay" class="val">READY</span></div>
         </div>
         <button class="btn" onclick="centerView()">CENTER VIEW</button>
+        
+        <button class="btn" id="infoBtn" style="background: rgba(0,255,204,0.1); margin-top: 15px; border-color: #00ffcc; color: #00ffcc; font-weight: bold;">? ИНФОРМАЦИЯ ДЛЯ ГОСТЯ</button>
     </div>
 
     <div id="anim-panel">
@@ -52,9 +83,8 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        // ИСПРАВЛЕНО: Актуальный репозиторий и логин
-        const USER = 'stanislavsfiral', REPO = 'GIDEON-Sfiral-Architecture';
-        const BOT = { phi: 1.618033, cycle: 100, amp: 125 }; // Использование VURF
+        const USER = 'stanislavsfiral', REPO = 'GIDEON_MIRROR';
+        const BOT = { phi: (1 + Math.sqrt(5)) / 2, cycle: 100, amp: 125 };
 
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000000);
@@ -67,29 +97,43 @@
         let mainObj = null, animData = null, currentFrame = 0, isPlaying = false, pointsPerFrame = 0, totalFrames = 0;
         let monitorObj = null, monitorGeom = null, videoActive = false, videoElement = null, frameSkipCounter = 0;
 
+        document.getElementById('infoBtn').onclick = () => {
+            document.getElementById('infoModal').style.display = 'block';
+        };
+        function closeModal() {
+            document.getElementById('infoModal').style.display = 'none';
+        }
+
+        function decryptGideon(buffer) {
+            let data = new Float32Array(buffer.slice(128));
+            for (let i = 0; i < data.length; i++) {
+                const angle = i * BOT.phi;
+                const phase = i % BOT.cycle;
+                let z = (phase < 40) ? Math.sin(angle) * BOT.amp : -Math.sin(angle) * BOT.amp;
+                data[i] = data[i] - z;
+            }
+            return data;
+        }
+
         async function init() {
-            // ИСПРАВЛЕНО: Загрузка списков моделей
-            fillMenu('static', 'staticSelector', [
-                'sfiral_base.npy', 'sfiral_dipole.npy', 'gideon_core.npy', 
-                'apple_double.npy', 'chain_v8.npy', 'ring_opt_x8.npy'
-            ]);
-            fillMenu('dynamic', 'dynamicSelector', [
-                'gideon_star_fast.npy', 'Astra Dynamics.npy', 'Astra Trinity.npy', 
-                'Astra Core Triad.npy', 'Astra Zenith.npy'
-            ]);
+            await loadFolder('static', 'staticSelector');
+            await loadFolder('dynamic', 'dynamicSelector');
             createHUD();
             animate();
         }
 
-        // Новая функция для надежного наполнения меню
-        function fillMenu(folder, selectId, files) {
-            const select = document.getElementById(selectId);
-            select.innerHTML = `<option value="">-- ${folder.toUpperCase()} --</option>`;
-            files.forEach(name => {
-                const opt = document.createElement('option');
-                opt.value = name; opt.text = name.toUpperCase();
-                select.appendChild(opt);
-            });
+        async function loadFolder(folder, selectId) {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/models/${folder}`);
+                const files = await res.json();
+                const select = document.getElementById(selectId);
+                select.innerHTML = `<option value="">-- ${folder.toUpperCase()} --</option>`;
+                files.filter(f => f.name.endsWith('.npy')).forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.name; opt.text = f.name.toUpperCase();
+                    select.appendChild(opt);
+                });
+            } catch(e) { console.error("Folder Load Error:", e); }
         }
 
         async function switchModel(type, fileName) {
@@ -98,28 +142,36 @@
             isPlaying = false;
             
             try {
-                // ИСПРАВЛЕНО: Путь к файлам моделей[cite: 3]
                 const res = await fetch(`models/${type}/${fileName}`);
                 const buffer = await res.arrayBuffer();
                 
                 let floatData;
-                // Все файлы теперь обрабатываются как NumPy массивы (.npy)[cite: 3]
-                floatData = new Float32Array(buffer.slice(128)); // Пропускаем заголовок NPY
-                pointsPerFrame = floatData.length / 3;
-                animData = floatData;
-                totalFrames = 1;
-
                 if (type === 'static') {
+                    floatData = decryptGideon(buffer);
+                    pointsPerFrame = floatData.length / 3;
+                    animData = floatData; totalFrames = 1;
                     document.getElementById('anim-panel').style.display = 'none';
                     document.getElementById('modeDisplay').innerText = 'STATIC (SECURE)';
                     renderPoints(floatData);
                 } else {
-                    // Для динамики имитируем кадры, если файл большой
-                    document.getElementById('anim-panel').style.display = 'flex';
-                    document.getElementById('modeDisplay').innerText = 'DYNAMIC (S-VISION)';
-                    renderPoints(floatData);
+                    const checkView = new DataView(buffer);
+                    const magic = checkView.getUint32(0, true);
+                    if (magic === 0x4E594447) { // "GDYN"
+                        totalFrames = checkView.getUint32(4, true);
+                        pointsPerFrame = checkView.getUint32(8, true);
+                        floatData = new Float32Array(buffer.slice(12));
+                        animData = floatData;
+                        document.getElementById('anim-panel').style.display = 'flex';
+                        document.getElementById('timeline').max = totalFrames - 1;
+                        document.getElementById('modeDisplay').innerText = 'DYNAMIC (RAW)';
+                        updateFrame(0);
+                    } else {
+                        floatData = new Float32Array(buffer);
+                        pointsPerFrame = floatData.length / 3;
+                        animData = floatData; totalFrames = 1;
+                        renderPoints(floatData);
+                    }
                 }
-                
                 setTimeout(centerView, 100);
                 document.getElementById('count').innerText = Math.floor(pointsPerFrame);
             } catch(e) { console.error("Model Load Error:", e); }
@@ -132,6 +184,14 @@
             geo.setAttribute('position', new THREE.BufferAttribute(data, 3));
             mainObj = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x00ffcc, size: 2, sizeAttenuation: false }));
             scene.add(mainObj);
+        }
+
+        function updateFrame(f) {
+            if (!animData) return;
+            const offset = f * pointsPerFrame * 3;
+            renderPoints(animData.subarray(offset, offset + pointsPerFrame * 3));
+            document.getElementById('timeline').value = f;
+            document.getElementById('frameDisplay').innerText = `F: ${f}`;
         }
 
         function centerView() {
@@ -147,7 +207,8 @@
         function createHUD() {
             const res = 256; const total = res * res;
             const pos = new Float32Array(total * 3);
-            const col = new Float32Array(total * 3).fill(0.15);
+            // ПОВЫШЕННАЯ БАЗОВАЯ ЯРКОСТЬ ДЛЯ ЭФФЕКТА СВЕЧЕНИЯ ЭФИРА (0.4)
+            const col = new Float32Array(total * 3).fill(0.4);
             for (let i = 0; i < total; i++) {
                 let x = i % res, y = Math.floor(i / res);
                 pos[i*3] = (x - res/2) * 0.0035 - 0.75; 
@@ -157,10 +218,11 @@
             monitorGeom = new THREE.BufferGeometry();
             monitorGeom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
             monitorGeom.setAttribute('color', new THREE.BufferAttribute(col, 3));
-            monitorObj = new THREE.Points(monitorGeom, new THREE.PointsMaterial({ size: 0.003, vertexColors: true, transparent: true, opacity: 0.8 }));
+            // УВЕЛИЧЕННЫЙ РАЗМЕР ТОЧЕК (0.005) И ПОЛНАЯ НЕПРОЗРАЧНОСТЬ ДЛЯ ЯРКОСТИ
+            monitorObj = new THREE.Points(monitorGeom, new THREE.PointsMaterial({ size: 0.005, vertexColors: true, transparent: true, opacity: 1.0 }));
             
-            camera.add(monitorObj);
-            scene.add(camera);
+            camera.add(monitorObj); 
+            scene.add(camera);      
             monitorObj.visible = false;
         }
 
@@ -173,7 +235,6 @@
             videoActive = false;
             if(videoElement) videoElement.pause();
             const img = new Image(); img.crossOrigin = "anonymous";
-            // ИСПРАВЛЕНО: Путь к фото[cite: 3]
             img.src = 'GIDEON_VISION/sources/SOURCE_BEAR.jpg'; 
             img.onload = () => {
                 ctxSV.drawImage(img, 0, 0, 256, 256);
@@ -185,7 +246,6 @@
         function applySvisionVideo() {
             if (!videoElement) {
                 videoElement = document.createElement('video');
-                // ИСПРАВЛЕНО: Путь к видео[cite: 3]
                 videoElement.src = 'GIDEON_VISION/sources/S_VISION_SOURCE.mp4';
                 videoElement.crossOrigin = "anonymous"; videoElement.loop = true; videoElement.muted = true;
             }
@@ -194,7 +254,8 @@
 
         function resetMonitor() {
             videoActive = false; if(videoElement) videoElement.pause();
-            monitorGeom.attributes.color.array.fill(0.15);
+            // ВОЗВРАТ К ПОД СВЕЧЕННОМУ ФОНУ ПРИ СБРОСЕ
+            monitorGeom.attributes.color.array.fill(0.4);
             monitorGeom.attributes.color.needsUpdate = true;
         }
 
@@ -209,13 +270,16 @@
 
         function animate() {
             requestAnimationFrame(animate);
+            if (isPlaying) {
+                if (++frameSkipCounter >= 5) {
+                    currentFrame = (currentFrame + 1) % totalFrames;
+                    updateFrame(currentFrame);
+                    frameSkipCounter = 0;
+                }
+            }
             if (videoActive && videoElement && videoElement.readyState >= 2) {
                 ctxSV.drawImage(videoElement, 0, 0, 256, 256);
                 updateMonitor(ctxSV.getImageData(0,0,256,256).data);
-            }
-            // Добавляем легкое вращение для динамики Сфирали
-            if (mainObj && isPlaying) {
-                mainObj.rotation.y += 0.01 / BOT.phi;
             }
             controls.update(); renderer.render(scene, camera);
         }
@@ -223,6 +287,9 @@
         document.getElementById('playBtn').onclick = () => {
             isPlaying = !isPlaying;
             document.getElementById('playBtn').innerText = isPlaying ? 'PAUSE' : 'PLAY';
+        };
+        document.getElementById('timeline').oninput = (e) => {
+            isPlaying = false; updateFrame(parseInt(e.target.value));
         };
 
         window.addEventListener('resize', () => {
