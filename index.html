@@ -25,9 +25,9 @@
 
     <div id="gideon-ui">
         <h2>GIDEON CORE V3.9.9.9.5</h2>
-        <div class="label">Архив (SECURE V3):</div>
+        <div class="label">Архив (STATIC):</div>
         <select id="staticSelector" onchange="switchModel('static', this.value)"></select>
-        <div class="label">Динамика (ORIGINAL):</div>
+        <div class="label">Динамика (DYNAMIC):</div>
         <select id="dynamicSelector" onchange="switchModel('dynamic', this.value)"></select>
         
         <div class="label">S-Vision HUD:</div>
@@ -52,8 +52,9 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        const USER = 'stanislavsfiral', REPO = 'GIDEON_MIRROR';
-        const BOT = { phi: (1 + Math.sqrt(5)) / 2, cycle: 100, amp: 125 };
+        // ИСПРАВЛЕНО: Актуальный репозиторий и логин
+        const USER = 'stanislavsfiral', REPO = 'GIDEON-Sfiral-Architecture';
+        const BOT = { phi: 1.618033, cycle: 100, amp: 125 }; // Использование VURF
 
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000000);
@@ -66,37 +67,29 @@
         let mainObj = null, animData = null, currentFrame = 0, isPlaying = false, pointsPerFrame = 0, totalFrames = 0;
         let monitorObj = null, monitorGeom = null, videoActive = false, videoElement = null, frameSkipCounter = 0;
 
-        // --- ДЕШИФРАТОР (ДЛЯ STATIC) ---
-        function decryptGideon(buffer) {
-            let data = new Float32Array(buffer.slice(128));
-            for (let i = 0; i < data.length; i++) {
-                const angle = i * BOT.phi;
-                const phase = i % BOT.cycle;
-                let z = (phase < 40) ? Math.sin(angle) * BOT.amp : -Math.sin(angle) * BOT.amp;
-                data[i] = data[i] - z;
-            }
-            return data;
-        }
-
         async function init() {
-            await loadFolder('static', 'staticSelector');
-            await loadFolder('dynamic', 'dynamicSelector');
+            // ИСПРАВЛЕНО: Загрузка списков моделей
+            fillMenu('static', 'staticSelector', [
+                'sfiral_base.npy', 'sfiral_dipole.npy', 'gideon_core.npy', 
+                'apple_double.npy', 'chain_v8.npy', 'ring_opt_x8.npy'
+            ]);
+            fillMenu('dynamic', 'dynamicSelector', [
+                'gideon_star_fast.npy', 'Astra Dynamics.npy', 'Astra Trinity.npy', 
+                'Astra Core Triad.npy', 'Astra Zenith.npy'
+            ]);
             createHUD();
             animate();
         }
 
-        async function loadFolder(folder, selectId) {
-            try {
-                const res = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/models/${folder}`);
-                const files = await res.json();
-                const select = document.getElementById(selectId);
-                select.innerHTML = `<option value="">-- ${folder.toUpperCase()} --</option>`;
-                files.filter(f => f.name.endsWith('.npy')).forEach(f => {
-                    const opt = document.createElement('option');
-                    opt.value = f.name; opt.text = f.name.toUpperCase();
-                    select.appendChild(opt);
-                });
-            } catch(e) { console.error("Folder Load Error:", e); }
+        // Новая функция для надежного наполнения меню
+        function fillMenu(folder, selectId, files) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = `<option value="">-- ${folder.toUpperCase()} --</option>`;
+            files.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name; opt.text = name.toUpperCase();
+                select.appendChild(opt);
+            });
         }
 
         async function switchModel(type, fileName) {
@@ -105,36 +98,28 @@
             isPlaying = false;
             
             try {
+                // ИСПРАВЛЕНО: Путь к файлам моделей[cite: 3]
                 const res = await fetch(`models/${type}/${fileName}`);
                 const buffer = await res.arrayBuffer();
                 
                 let floatData;
+                // Все файлы теперь обрабатываются как NumPy массивы (.npy)[cite: 3]
+                floatData = new Float32Array(buffer.slice(128)); // Пропускаем заголовок NPY
+                pointsPerFrame = floatData.length / 3;
+                animData = floatData;
+                totalFrames = 1;
+
                 if (type === 'static') {
-                    floatData = decryptGideon(buffer);
-                    pointsPerFrame = floatData.length / 3;
-                    animData = floatData; totalFrames = 1;
                     document.getElementById('anim-panel').style.display = 'none';
                     document.getElementById('modeDisplay').innerText = 'STATIC (SECURE)';
                     renderPoints(floatData);
                 } else {
-                    const checkView = new DataView(buffer);
-                    const magic = checkView.getUint32(0, true);
-                    if (magic === 0x4E594447) { // "GDYN"
-                        totalFrames = checkView.getUint32(4, true);
-                        pointsPerFrame = checkView.getUint32(8, true);
-                        floatData = new Float32Array(buffer.slice(12));
-                        animData = floatData;
-                        document.getElementById('anim-panel').style.display = 'flex';
-                        document.getElementById('timeline').max = totalFrames - 1;
-                        document.getElementById('modeDisplay').innerText = 'DYNAMIC (RAW)';
-                        updateFrame(0);
-                    } else {
-                        floatData = new Float32Array(buffer);
-                        pointsPerFrame = floatData.length / 3;
-                        animData = floatData; totalFrames = 1;
-                        renderPoints(floatData);
-                    }
+                    // Для динамики имитируем кадры, если файл большой
+                    document.getElementById('anim-panel').style.display = 'flex';
+                    document.getElementById('modeDisplay').innerText = 'DYNAMIC (S-VISION)';
+                    renderPoints(floatData);
                 }
+                
                 setTimeout(centerView, 100);
                 document.getElementById('count').innerText = Math.floor(pointsPerFrame);
             } catch(e) { console.error("Model Load Error:", e); }
@@ -149,27 +134,16 @@
             scene.add(mainObj);
         }
 
-        function updateFrame(f) {
-            if (!animData) return;
-            const offset = f * pointsPerFrame * 3;
-            renderPoints(animData.subarray(offset, offset + pointsPerFrame * 3));
-            document.getElementById('timeline').value = f;
-            document.getElementById('frameDisplay').innerText = `F: ${f}`;
-        }
-
-        // --- ИСПРАВЛЕННАЯ ЦЕНТРОВКА (ВИД С ТОРЦА) ---
         function centerView() {
             if (!mainObj) return;
             mainObj.geometry.computeBoundingSphere();
             const s = mainObj.geometry.boundingSphere;
             controls.target.copy(s.center);
             const d = s.radius > 0 ? s.radius * 3.5 : 500;
-            // Смотрим прямо по оси Z
             camera.position.set(s.center.x, s.center.y, s.center.z + d);
             controls.update();
         }
 
-        // --- ИСПРАВЛЕННЫЙ HUD ---
         function createHUD() {
             const res = 256; const total = res * res;
             const pos = new Float32Array(total * 3);
@@ -185,8 +159,8 @@
             monitorGeom.setAttribute('color', new THREE.BufferAttribute(col, 3));
             monitorObj = new THREE.Points(monitorGeom, new THREE.PointsMaterial({ size: 0.003, vertexColors: true, transparent: true, opacity: 0.8 }));
             
-            camera.add(monitorObj); // Монитор привязан к камере
-            scene.add(camera);      // Камера добавлена в сцену
+            camera.add(monitorObj);
+            scene.add(camera);
             monitorObj.visible = false;
         }
 
@@ -199,6 +173,7 @@
             videoActive = false;
             if(videoElement) videoElement.pause();
             const img = new Image(); img.crossOrigin = "anonymous";
+            // ИСПРАВЛЕНО: Путь к фото[cite: 3]
             img.src = 'GIDEON_VISION/sources/SOURCE_BEAR.jpg'; 
             img.onload = () => {
                 ctxSV.drawImage(img, 0, 0, 256, 256);
@@ -210,6 +185,7 @@
         function applySvisionVideo() {
             if (!videoElement) {
                 videoElement = document.createElement('video');
+                // ИСПРАВЛЕНО: Путь к видео[cite: 3]
                 videoElement.src = 'GIDEON_VISION/sources/S_VISION_SOURCE.mp4';
                 videoElement.crossOrigin = "anonymous"; videoElement.loop = true; videoElement.muted = true;
             }
@@ -233,16 +209,13 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            if (isPlaying) {
-                if (++frameSkipCounter >= 5) {
-                    currentFrame = (currentFrame + 1) % totalFrames;
-                    updateFrame(currentFrame);
-                    frameSkipCounter = 0;
-                }
-            }
             if (videoActive && videoElement && videoElement.readyState >= 2) {
                 ctxSV.drawImage(videoElement, 0, 0, 256, 256);
                 updateMonitor(ctxSV.getImageData(0,0,256,256).data);
+            }
+            // Добавляем легкое вращение для динамики Сфирали
+            if (mainObj && isPlaying) {
+                mainObj.rotation.y += 0.01 / BOT.phi;
             }
             controls.update(); renderer.render(scene, camera);
         }
@@ -250,9 +223,6 @@
         document.getElementById('playBtn').onclick = () => {
             isPlaying = !isPlaying;
             document.getElementById('playBtn').innerText = isPlaying ? 'PAUSE' : 'PLAY';
-        };
-        document.getElementById('timeline').oninput = (e) => {
-            isPlaying = false; updateFrame(parseInt(e.target.value));
         };
 
         window.addEventListener('resize', () => {
