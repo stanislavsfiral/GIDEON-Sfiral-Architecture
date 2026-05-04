@@ -83,7 +83,8 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
-        const USER = 'stanislavsfiral', REPO = 'GIDEON_MIRROR';
+        // ИСПРАВЛЕНО: Актуальный репозиторий для загрузки списков
+        const USER = 'stanislavsfiral', REPO = 'GIDEON-Sfiral-Architecture'; 
         const BOT = { phi: (1 + Math.sqrt(5)) / 2, cycle: 100, amp: 125 };
 
         const scene = new THREE.Scene();
@@ -104,6 +105,7 @@
             document.getElementById('infoModal').style.display = 'none';
         }
 
+        // Логика дешифровки GIDEON V3: отрезаем 128 байт и снимаем PHI-смещение
         function decryptGideon(buffer) {
             let data = new Float32Array(buffer.slice(128));
             for (let i = 0; i < data.length; i++) {
@@ -128,11 +130,14 @@
                 const files = await res.json();
                 const select = document.getElementById(selectId);
                 select.innerHTML = `<option value="">-- ${folder.toUpperCase()} --</option>`;
-                files.filter(f => f.name.endsWith('.npy')).forEach(f => {
-                    const opt = document.createElement('option');
-                    opt.value = f.name; opt.text = f.name.toUpperCase();
-                    select.appendChild(opt);
-                });
+                
+                if (Array.isArray(files)) {
+                    files.filter(f => f.name.toLowerCase().endsWith('.npy')).forEach(f => {
+                        const opt = document.createElement('option');
+                        opt.value = f.name; opt.text = f.name.toUpperCase();
+                        select.appendChild(opt);
+                    });
+                }
             } catch(e) { console.error("Folder Load Error:", e); }
         }
 
@@ -147,11 +152,12 @@
                 
                 let floatData;
                 if (type === 'static') {
+                    // Применяем дешифровку для защищенных файлов архива
                     floatData = decryptGideon(buffer);
                     pointsPerFrame = floatData.length / 3;
                     animData = floatData; totalFrames = 1;
                     document.getElementById('anim-panel').style.display = 'none';
-                    document.getElementById('modeDisplay').innerText = 'STATIC (SECURE)';
+                    document.getElementById('modeDisplay').innerText = 'STATIC (SECURE V3)';
                     renderPoints(floatData);
                 } else {
                     const checkView = new DataView(buffer);
@@ -166,6 +172,7 @@
                         document.getElementById('modeDisplay').innerText = 'DYNAMIC (RAW)';
                         updateFrame(0);
                     } else {
+                        // Обычный NPY без шифрования
                         floatData = new Float32Array(buffer);
                         pointsPerFrame = floatData.length / 3;
                         animData = floatData; totalFrames = 1;
@@ -207,7 +214,6 @@
         function createHUD() {
             const res = 256; const total = res * res;
             const pos = new Float32Array(total * 3);
-            // ПОВЫШЕННАЯ БАЗОВАЯ ЯРКОСТЬ ДЛЯ ЭФФЕКТА СВЕЧЕНИЯ ЭФИРА (0.4)
             const col = new Float32Array(total * 3).fill(0.4);
             for (let i = 0; i < total; i++) {
                 let x = i % res, y = Math.floor(i / res);
@@ -218,9 +224,7 @@
             monitorGeom = new THREE.BufferGeometry();
             monitorGeom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
             monitorGeom.setAttribute('color', new THREE.BufferAttribute(col, 3));
-            // УВЕЛИЧЕННЫЙ РАЗМЕР ТОЧЕК (0.005) И ПОЛНАЯ НЕПРОЗРАЧНОСТЬ ДЛЯ ЯРКОСТИ
             monitorObj = new THREE.Points(monitorGeom, new THREE.PointsMaterial({ size: 0.005, vertexColors: true, transparent: true, opacity: 1.0 }));
-            
             camera.add(monitorObj); 
             scene.add(camera);      
             monitorObj.visible = false;
@@ -254,7 +258,6 @@
 
         function resetMonitor() {
             videoActive = false; if(videoElement) videoElement.pause();
-            // ВОЗВРАТ К ПОД СВЕЧЕННОМУ ФОНУ ПРИ СБРОСЕ
             monitorGeom.attributes.color.array.fill(0.4);
             monitorGeom.attributes.color.needsUpdate = true;
         }
